@@ -4,59 +4,100 @@
 <base target="_top">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="robots" content="noindex,nofollow">
 <title>UNIGEN Barcode Label Generator</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Segoe UI',Arial,sans-serif;background:#1a1a2e;min-height:100vh;-webkit-user-select:none;user-select:none;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#1a1a2e;min-height:100vh;}
+
 .topbar{background:#0f3460;padding:14px 28px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 12px rgba(0,0,0,.4);}
-.topbar .brand{font-size:22px;font-weight:900;letter-spacing:3px;color:#e94560;}
-.topbar .sub{font-size:12px;color:#aac;font-weight:400;letter-spacing:1px;}
-.panel{max-width:980px;margin:24px auto;padding:0 16px 40px;}
-.tabs{display:flex;gap:4px;margin-bottom:0;}
-.tab{padding:10px 22px;background:#16213e;color:#aab;border:none;border-radius:8px 8px 0 0;cursor:pointer;font-size:13px;font-weight:700;letter-spacing:.5px;transition:background .2s,color .2s;}
+.brand{font-size:22px;font-weight:900;letter-spacing:3px;color:#e94560;}
+.sub{font-size:12px;color:#aac;letter-spacing:1px;}
+
+.panel{max-width:1080px;margin:24px auto;padding:0 16px 40px;}
+
+.tabs{display:flex;gap:4px;}
+.tab{padding:10px 22px;background:#16213e;color:#aab;border:none;border-radius:8px 8px 0 0;cursor:pointer;font-size:13px;font-weight:700;transition:background .2s,color .2s;}
 .tab.active{background:#fff;color:#0f3460;}
+
 .card{background:#fff;border-radius:0 8px 8px 8px;padding:28px;box-shadow:0 4px 24px rgba(0,0,0,.25);}
-.sec-title{font-size:13px;font-weight:900;color:#0f3460;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;padding-bottom:6px;border-bottom:2px solid #e94560;display:inline-block;}
+.sec-title{font-size:13px;font-weight:900;color:#0f3460;text-transform:uppercase;letter-spacing:1px;padding-bottom:6px;border-bottom:2px solid #e94560;display:inline-block;margin-bottom:16px;}
+
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;}
-.form-group{display:flex;flex-direction:column;gap:5px;}
-.form-group label{font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.5px;}
-.form-group input,.form-group select{padding:9px 12px;border:1.5px solid #dde;border-radius:6px;font-size:13px;transition:border-color .2s;}
-.form-group input:focus,.form-group select:focus{outline:none;border-color:#e94560;}
-.preview-box{border:2px dashed #c0c8e0;border-radius:8px;padding:18px;background:#f7f9ff;margin-bottom:20px;display:flex;align-items:center;justify-content:center;min-height:90px;}
-.preview-box img{max-height:60px;max-width:220px;}
-.preview-box p{color:#aaa;font-size:13px;}
+.fg{display:flex;flex-direction:column;gap:5px;}
+.fg label{font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.5px;}
+.fg input,.fg select{padding:9px 12px;border:1.5px solid #dde;border-radius:6px;font-size:13px;transition:border-color .2s;}
+.fg input:focus,.fg select:focus{outline:none;border-color:#e94560;}
+
+.preview-box{border:2px dashed #c0c8e0;border-radius:8px;padding:16px;background:#f7f9ff;margin-top:8px;display:flex;align-items:center;justify-content:center;min-height:80px;}
+.preview-box img{max-height:56px;max-width:200px;}
+.preview-box p{color:#bbb;font-size:13px;}
+
 .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
-.btn{padding:11px 22px;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.4px;transition:transform .1s,opacity .2s;}
+.btn{padding:10px 20px;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;transition:transform .1s,opacity .2s;display:inline-flex;align-items:center;gap:6px;}
 .btn:hover{opacity:.88;transform:translateY(-1px);}
-.btn-blue{background:#0f3460;color:#fff;}
 .btn-red{background:#e94560;color:#fff;}
-.btn-green{background:#1e7e34;color:#fff;}
+.btn-blue{background:#0f3460;color:#fff;}
 .btn-orange{background:#d97706;color:#fff;}
-.btn-gray{background:#6c757d;color:#fff;display:inline-block;}
-.bulk-drop{border:2.5px dashed #c0c8e0;border-radius:10px;padding:32px;text-align:center;background:#f7f9ff;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:20px;}
-.bulk-drop:hover,.bulk-drop.dragover{border-color:#e94560;background:#fff0f3;}
-.bulk-drop .icon{font-size:36px;margin-bottom:8px;}
-.bulk-drop p{font-size:14px;color:#555;}
-.bulk-drop small{color:#999;font-size:11px;}
-#excelFile{display:none;}
-.table-wrap{overflow-x:auto;margin-top:14px;}
-table.data-tbl{width:100%;border-collapse:collapse;font-size:12px;}
-table.data-tbl th{background:#0f3460;color:#fff;padding:8px 10px;text-align:left;font-weight:700;}
-table.data-tbl td{padding:7px 10px;border-bottom:1px solid #eee;vertical-align:middle;}
-table.data-tbl tr:nth-child(even) td{background:#f9f9ff;}
-table.data-tbl tr:hover td{background:#fff0f3;}
-table.data-tbl td input{width:100%;border:1px solid #dde;border-radius:4px;padding:4px 6px;font-size:12px;}
-table.data-tbl td select{border:1px solid #dde;border-radius:4px;padding:4px 6px;font-size:12px;}
-.del-btn{background:#e94560;color:#fff;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;}
-.row-count{font-size:12px;color:#888;margin-top:8px;}
-.status-bar{background:#e8f5e9;border:1px solid #a5d6a7;border-radius:6px;padding:10px 16px;font-size:13px;font-weight:600;color:#1b5e20;margin-top:14px;display:none;}
+.btn-green{background:#1e7e34;color:#fff;}
+.btn-gray{background:#6c757d;color:#fff;}
+
+.drop-zone{border:2.5px dashed #c0c8e0;border-radius:10px;padding:28px;text-align:center;background:#f7f9ff;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:6px;}
+.drop-zone:hover,.drop-zone.dragover{border-color:#e94560;background:#fff0f3;}
+.drop-zone .dz-icon{font-size:32px;margin-bottom:6px;}
+.drop-zone p{font-size:14px;color:#555;}
+.drop-zone small{color:#999;font-size:11px;}
+
+.img-drop-zone{border:2.5px dashed #1e7e34;border-radius:10px;padding:22px;text-align:center;background:#f0fff4;cursor:pointer;transition:border-color .2s;margin-bottom:6px;}
+.img-drop-zone:hover{border-color:#145523;background:#e6ffed;}
+
+/* Smart upload zone */
+.smart-drop-zone{border:2.5px dashed #7c3aed;border-radius:10px;padding:28px;text-align:center;background:#faf5ff;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:6px;}
+.smart-drop-zone:hover,.smart-drop-zone.dragover{border-color:#5b21b6;background:#ede9fe;}
+.smart-drop-zone .dz-icon{font-size:36px;margin-bottom:8px;}
+.smart-drop-zone h3{font-size:15px;font-weight:800;color:#5b21b6;margin-bottom:4px;}
+.smart-drop-zone p{font-size:13px;color:#6d28d9;}
+.smart-drop-zone small{color:#8b5cf6;font-size:11px;display:block;margin-top:6px;}
+
+.table-wrap{overflow-x:auto;margin-top:10px;}
+table.dtbl{width:100%;border-collapse:collapse;font-size:12px;}
+table.dtbl th{background:#0f3460;color:#fff;padding:8px 10px;text-align:left;font-weight:700;white-space:nowrap;}
+table.dtbl td{padding:6px 8px;border-bottom:1px solid #eee;vertical-align:middle;}
+table.dtbl tr:nth-child(even) td{background:#f9f9ff;}
+table.dtbl tr:hover td{background:#fff0f3;}
+table.dtbl td input[type="text"],
+table.dtbl td input[type="number"]{width:100%;border:1px solid #dde;border-radius:4px;padding:5px 7px;font-size:12px;background:#fff;}
+table.dtbl td input.auto-filled{background:#f0fff4;border-color:#a7f3d0;color:#065f46;font-weight:600;}
+.del-btn{background:#e94560;color:#fff;border:none;border-radius:4px;padding:4px 9px;cursor:pointer;font-size:11px;}
+.row-count{font-size:12px;color:#888;}
+
+.status-bar{background:#e8f5e9;border:1px solid #a5d6a7;border-radius:6px;padding:10px 16px;font-size:13px;font-weight:600;color:#1b5e20;margin-top:12px;display:none;}
 .status-bar.error{background:#fdecea;border-color:#ef9a9a;color:#b71c1c;}
-.template-note{background:#fffbea;border:1px solid #f6d860;border-radius:6px;padding:10px 14px;font-size:12px;color:#7a5c00;margin-bottom:18px;}
-.template-note strong{color:#b45309;}
-.preview-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px;}
+.status-bar.info{background:#e3f2fd;border-color:#90caf9;color:#0d47a1;}
+
+.tnote{background:#fffbea;border:1px solid #f6d860;border-radius:6px;padding:12px 14px;font-size:12px;color:#7a5c00;margin-bottom:16px;line-height:1.7;}
+.tnote strong{color:#b45309;}
+.tnote code{background:#fef3c7;padding:1px 5px;border-radius:3px;font-family:monospace;}
+
+.step-badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:#e94560;color:#fff;border-radius:50%;font-size:11px;font-weight:900;margin-right:6px;flex-shrink:0;}
+.step-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:12px;font-size:13px;color:#444;line-height:1.5;}
+
+.ph{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+
+/* Thumb preview in table */
+.bc-thumb{width:40px;height:24px;object-fit:contain;border:1px solid #eee;border-radius:3px;vertical-align:middle;}
+
+/* Info badge */
+.info-badge{display:inline-block;background:#ede9fe;color:#5b21b6;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;}
+
+/* Filename hint */
+.fname-hint{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#14532d;line-height:1.8;}
+.fname-hint strong{color:#166534;}
+.fname-hint code{background:#dcfce7;padding:1px 6px;border-radius:3px;font-family:monospace;font-size:11px;}
+
+/* Parsed tag */
+.parsed-tag{display:inline-block;background:#dbeafe;color:#1e40af;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;margin-left:4px;}
 </style>
 </head>
 <body>
@@ -64,30 +105,43 @@ table.data-tbl td select{border:1px solid #dde;border-radius:4px;padding:4px 6px
 <div class="topbar">
   <div>
     <div class="brand">UNIGEN</div>
-    <div class="sub">Barcode Label Generator — Bulk Edition</div>
+    <div class="sub">Barcode Label Generator — Smart Image Name Detection</div>
   </div>
 </div>
 
 <div class="panel">
   <div class="tabs">
-    <button class="tab active" onclick="_x0a('single')">Single Product</button>
-    <button class="tab" onclick="_x0a('bulk')">Bulk Upload</button>
+    <button class="tab active" onclick="switchTab('single')">Single Product</button>
+    <button class="tab" onclick="switchTab('bulk')">Bulk (Excel Upload)</button>
+    <button class="tab" onclick="switchTab('manual')">Manual Bulk Entry</button>
   </div>
 
-  <!-- SINGLE -->
+  <!-- ═══════ SINGLE ═══════ -->
   <div class="card" id="tab-single">
     <span class="sec-title">Single Barcode Label</span>
-    <div class="form-grid" style="margin-top:14px;">
-      <div class="form-group" style="grid-column:1/-1;">
-        <label>Upload Barcode Image</label>
-        <input type="file" id="s_barcode" accept="image/*" onchange="_x0b(this)">
+
+    <div class="fname-hint">
+      <strong>💡 Smart Image Name Detection:</strong> Barcode image ka file name se <strong>EAN</strong> ya <strong>Product Name</strong> auto-fill ho jayega.<br>
+      • Sirf numbers = EAN samjha jayega → <code>8901234567890.png</code><br>
+      • Text naam = Product name samjha jayega → <code>Microfiber Cloth Duster.png</code><br>
+      • Both format → <code>Microfiber Cloth 8901234567890.png</code>
+    </div>
+
+    <div class="form-grid">
+      <div class="fg" style="grid-column:1/-1;">
+        <label>Barcode Image Upload</label>
+        <input type="file" id="s_bc" accept="image/*" onchange="previewSingle(this)">
         <div class="preview-box" id="singlePreview"><p>No image selected</p></div>
       </div>
-      <div class="form-group">
+      <div class="fg">
         <label>Product Name</label>
-        <input type="text" id="s_name" placeholder="e.g. Microfiber Duster">
+        <input type="text" id="s_name" placeholder="e.g. Microfiber Cloth Duster">
       </div>
-      <div class="form-group">
+      <div class="fg">
+        <label>EAN / Barcode Number</label>
+        <input type="text" id="s_ean" placeholder="e.g. 8901234567890">
+      </div>
+      <div class="fg">
         <label>Labels Per Page</label>
         <select id="s_copies">
           <option value="10">10 (2×5)</option>
@@ -99,314 +153,594 @@ table.data-tbl td select{border:1px solid #dde;border-radius:4px;padding:4px 6px
           <option value="54" selected>54 (6×9)</option>
         </select>
       </div>
-      <div class="form-group">
+      <div class="fg">
         <label>Number of Pages</label>
         <input type="number" id="s_pages" value="1" min="1" max="20">
       </div>
     </div>
+
     <div class="btn-row">
-      <button class="btn btn-red" onclick="_x16()">Download PDF</button>
+      <button class="btn btn-red" onclick="generateSingle()">⬇ Download PDF</button>
     </div>
-    <div id="status-single" class="status-bar"></div>
+    <div id="st-single" class="status-bar"></div>
   </div>
 
-  <!-- BULK -->
+  <!-- ═══════ BULK EXCEL ═══════ -->
   <div class="card" id="tab-bulk" style="display:none;">
-    <div class="template-note">
-      <strong>Excel format:</strong> Columns — <code>ProductName | LabelsPerPage | Pages</code><br>
-      Row 1 = Header (skip), Row 2+ = data. Phir har product ke liye barcode image alag upload karein.
-      <br><br>
-      <button class="btn btn-orange" style="font-size:11px;padding:6px 14px;" onclick="_x15()">Download Sample Template</button>
+
+    <div class="tnote">
+      <strong>Excel columns:</strong>
+      <code>ProductName</code> | <code>EAN</code> | <code>LabelsPerPage</code> | <code>Pages</code><br>
+      <strong>Barcode images:</strong> File ka naam = EAN number (e.g. <code>8901234567890.png</code>) — system auto-match karega.<br>
+      <button class="btn btn-orange" style="font-size:11px;padding:5px 12px;margin-top:8px;" onclick="downloadTemplate()">⬇ Sample Excel Template</button>
     </div>
 
-    <span class="sec-title">Upload Excel / CSV</span>
-    <div style="margin-top:12px;">
-      <div class="bulk-drop" id="dropZone"
-           onclick="document.getElementById('excelFile').click()"
-           ondragover="_x0c(event)" ondragleave="_x0d()" ondrop="_x0e(event)">
-        <div class="icon">📊</div>
-        <p>Click ya drag karke Excel/CSV upload karein</p>
-        <small>.xlsx, .xls, .csv supported</small>
+    <div style="margin-bottom:20px;">
+      <div class="step-row"><span class="step-badge">1</span><div>Excel file upload karein (ProductName, EAN, LabelsPerPage, Pages)</div></div>
+      <div class="step-row"><span class="step-badge">2</span><div>Barcode images upload karein — <strong>file names = EAN numbers</strong> (multiple select OK)</div></div>
+      <div class="step-row"><span class="step-badge">3</span><div>Table mein ✅ confirm karein → PDF Download</div></div>
+    </div>
+
+    <span class="sec-title">Step 1 — Excel Upload</span>
+    <div class="drop-zone" id="dropZone"
+         onclick="document.getElementById('excelFile').click()"
+         ondragover="doDragOver(event,'dropZone')" ondragleave="doDragLeave('dropZone')" ondrop="doDropFile(event)">
+      <div class="dz-icon">📊</div>
+      <p>Click ya drag karke Excel / CSV upload karein</p>
+      <small>.xlsx · .xls · .csv supported</small>
+    </div>
+    <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="readExcel(this.files[0])">
+
+    <div style="margin-top:20px;">
+      <span class="sec-title">Step 2 — Barcode Images Upload</span>
+      <div class="img-drop-zone" onclick="document.getElementById('bcImages').click()" style="padding:22px;text-align:center;">
+        <div style="font-size:28px;margin-bottom:4px;">🖼️</div>
+        <p style="font-size:13px;color:#1e7e34;font-weight:600;">Barcode images yahan upload karein (multiple select)</p>
+        <small style="color:#4caf50;font-size:11px;">File name = EAN number hona chahiye · e.g. 8901234567890.png</small>
       </div>
-      <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" onchange="_x0f(this.files[0])">
+      <input type="file" id="bcImages" accept="image/*" multiple style="display:none" onchange="loadBarcodeImages(this,'bulk')">
     </div>
 
-    <div id="bulkTableWrap" style="display:none;">
-      <div class="preview-header">
+    <div id="bulkExcelTableWrap" style="display:none;margin-top:20px;">
+      <div class="ph">
         <span class="sec-title" style="margin-bottom:0;">Products</span>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <span id="bulkRowCount" class="row-count"></span>
-          <button class="btn btn-blue" style="font-size:11px;padding:6px 14px;" onclick="_x14()">+ Add Row</button>
-        </div>
+        <span id="bulkExcelRowCount" class="row-count"></span>
       </div>
       <div class="table-wrap">
-        <table class="data-tbl">
+        <table class="dtbl">
           <thead>
-            <tr>
-              <th>#</th><th>Product Name</th><th>Labels/Page</th>
-              <th>Pages</th><th>Barcode Image</th><th></th>
-            </tr>
+            <tr><th>#</th><th>Product Name</th><th>EAN</th><th>Labels/Page</th><th>Pages</th><th>Barcode</th><th></th></tr>
           </thead>
-          <tbody id="bulkTableBody"></tbody>
+          <tbody id="bulkExcelTbody"></tbody>
         </table>
       </div>
     </div>
 
-    <div class="btn-row" id="bulkBtnRow" style="display:none;">
-      <button class="btn btn-red" onclick="_x17()">Download PDF (All Products)</button>
+    <div class="btn-row" id="bulkExcelBtnRow" style="display:none;">
+      <button class="btn btn-red" onclick="generateBulkExcel()">⬇ Download PDF (All Products)</button>
     </div>
-    <div id="status-bulk" class="status-bar"></div>
+    <div id="st-bulk" class="status-bar"></div>
   </div>
+
+  <!-- ═══════ MANUAL BULK ═══════ -->
+  <div class="card" id="tab-manual" style="display:none;">
+
+    <div class="fname-hint">
+      <strong>🪄 Smart Auto-Fill:</strong> Barcode image upload karo — file name se <strong>Name</strong> aur <strong>EAN</strong> auto-fill ho jayenge!<br>
+      • <code>8901234567890.png</code> → EAN: 8901234567890<br>
+      • <code>Microfiber Cloth Duster.png</code> → Name: Microfiber Cloth Duster<br>
+      • <code>Microfiber Cloth 8901234567890.png</code> → Name + EAN dono fill honge
+    </div>
+
+    <!-- Smart bulk upload zone -->
+    <div style="margin-bottom:20px;">
+      <span class="sec-title">Quick Upload — Sabhi Images Ek Saath</span>
+      <div class="smart-drop-zone" id="smartDropZone"
+           onclick="document.getElementById('smartBcImages').click()"
+           ondragover="doDragOver(event,'smartDropZone')" ondragleave="doDragLeave('smartDropZone')" ondrop="doDropSmart(event)">
+        <div class="dz-icon">🚀</div>
+        <h3>Sabhi Barcode Images Ek Saath Upload Karein</h3>
+        <p>Multiple images select karo — har image ke liye ek row auto-create hogi</p>
+        <small>File name se Product Name + EAN auto-detect hoga</small>
+      </div>
+      <input type="file" id="smartBcImages" accept="image/*" multiple style="display:none" onchange="smartBulkUpload(this)">
+    </div>
+
+    <div class="ph">
+      <span class="sec-title" style="margin-bottom:0;">Manual Entry Table</span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-blue" style="font-size:12px;padding:7px 16px;" onclick="addManualRow()">+ Add Row</button>
+        <button class="btn btn-gray" style="font-size:12px;padding:7px 16px;" onclick="clearAll()">🗑 Clear All</button>
+      </div>
+    </div>
+
+    <p style="font-size:12px;color:#888;margin-bottom:14px;">
+      Har product ke liye name, EAN fill karo ya <strong>image upload karo</strong> — file name se auto-fill hoga.
+    </p>
+
+    <div id="manualTableWrap" style="display:none;">
+      <div class="table-wrap">
+        <table class="dtbl">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Product Name</th>
+              <th>EAN</th>
+              <th>Labels/Page</th>
+              <th>Pages</th>
+              <th>Barcode Image</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="manualTbody"></tbody>
+        </table>
+      </div>
+      <div id="manualRowCount" class="row-count" style="margin-top:6px;"></div>
+    </div>
+
+    <div class="btn-row" id="manualBtnRow" style="display:none;">
+      <button class="btn btn-red" onclick="generateManual()">⬇ Download PDF</button>
+    </div>
+    <div id="st-manual" class="status-bar"></div>
+  </div>
+
 </div>
 
 <script>
 (function(){
-var _d=document;
-_d.addEventListener('contextmenu',function(e){e.preventDefault();return false;});
-_d.addEventListener('keydown',function(e){
-  if((e.ctrlKey&&(e.key==='u'||e.key==='s'||e.key==='U'||e.key==='S'))||e.key==='F12'){e.preventDefault();return false;}
-  if(e.ctrlKey&&e.shiftKey&&(e.key==='I'||e.key==='J'||e.key==='C')){e.preventDefault();return false;}
-});
+  var d=document;
+  d.addEventListener('contextmenu',function(e){e.preventDefault();});
+  d.addEventListener('keydown',function(e){
+    if((e.ctrlKey&&(e.key==='u'||e.key==='U'))||e.key==='F12'){e.preventDefault();}
+    if(e.ctrlKey&&e.shiftKey&&(e.key==='I'||e.key==='J'||e.key==='C')){e.preventDefault();}
+  });
 })();
-var _x1d = {}; 
-var _x1c = 'single';
-var _x1b = null;
-var _x1e = {
- 10: { cols: 2, rows: 5 },
- 12: { cols: 3, rows: 4 },
- 15: { cols: 3, rows: 5 },
- 20: { cols: 4, rows: 5 },
- 24: { cols: 4, rows: 6 },
- 30: { cols: 5, rows: 6 },
- 54: { cols: 6, rows: 9 }
-};
-function _x0a(t) {
- _x1c = t;
- ['single','bulk'].forEach(function(id) {
- document.getElementById('tab-' + id).style.display = id === t ? 'block' : 'none';
- });
- document.querySelectorAll('.tab').forEach(function(el, i) {
- el.classList.toggle('active', ['single','bulk'][i] === t);
- });
-}
-function _x0b(input) {
- if (!input.files || !input.files[0]) return;
- var reader = new FileReader();
- reader.onload = function(e) {
- _x1b = e.target.result;
- document.getElementById('singlePreview').innerHTML = '<img src="' + _x1b + '">';
- };
- reader.readAsDataURL(input.files[0]);
-}
-function _x0c(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('dragover'); }
-function _x0d() { document.getElementById('dropZone').classList.remove('dragover'); }
-function _x0e(e) {
- e.preventDefault(); _x0d();
- var f = e.dataTransfer.files[0];
- if (f) _x0f(f);
-}
-function _x0f(file) {
- if (!file) return;
- var reader = new FileReader();
- reader.onload = function(e) {
- var wb = XLSX.read(e.target.result, { type: 'binary' });
- var ws = wb.Sheets[wb.SheetNames[0]];
- var rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
- var _x1f = [];
- for (var i = 1; i < rows.length; i++) {
- var r = rows[i];
- var name = String(r[0] || '').trim();
- var copies = parseInt(r[1]) || 54;
- var pages = parseInt(r[2]) || 1;
- if (!name) continue;
- _x1f.push({ name: name, copies: copies, pages: pages, dataURL: null, fileInput: null });
- }
- _x10(_x1f);
- _x1a('status-bulk', '✅ ' + _x1f.length + ' _x28 _x1f. Ab har product ke liye barcode image upload karein.', false);
- };
- reader.readAsBinaryString(file);
-}
-function _x10(data) {
- var tbody = document.getElementById('bulkTableBody');
- tbody.innerHTML = '';
- window._bulkData = data;
- data.forEach(function(row, i) {
- var tr = document.createElement('tr');
- tr.innerHTML =
- '<td>' + (i+1) + '</td>' +
- '<td><input value="' + esc(row.name) + '" onchange="window._bulkData[' + i + '].name=this.value"></td>' +
- '<td><select onchange="window._bulkData[' + i + '].copies=parseInt(this.value)">' + _x11(row.copies) + '</select></td>' +
- '<td><input type="number" value="' + row.pages + '" min="1" max="20" style="width:55px" onchange="window._bulkData[' + i + '].pages=parseInt(this.value)||1"></td>' +
- '<td>' +
- '<input type="file" id="bc_' + i + '" accept="image/*" style="display:none" onchange="_x12(' + i + ',this)">' +
- '<label for="bc_' + i + '" class="btn btn-gray" style="padding:5px 10px;font-size:11px;cursor:pointer;" id="lbl_' + i + '">📷 Upload</label>' +
- '</td>' +
- '<td><button class="del-btn" onclick="_x13(' + i + ')">✕</button></td>';
- tbody.appendChild(tr);
- });
- document.getElementById('bulkTableWrap').style.display = data.length ? 'block' : 'none';
- document.getElementById('bulkBtnRow').style.display = data.length ? 'flex' : 'none';
- document.getElementById('bulkRowCount').textContent = data.length + ' _x28';
-}
-function _x11(selected) {
- var opts = [10,12,15,20,24,30,54];
- return opts.map(function(v) {
- return '<option value="' + v + '"' + (v === selected ? ' selected' : '') + '>' + v + '</option>';
- }).join('');
-}
-function _x12(i, input) {
- if (!input.files || !input.files[0]) return;
- var reader = new FileReader();
- reader.onload = function(e) {
- window._bulkData[i].dataURL = e.target.result;
- document.getElementById('lbl_' + i).textContent = '✅ Loaded';
- document.getElementById('lbl_' + i).style.background = '#1e7e34';
- };
- reader.readAsDataURL(input.files[0]);
-}
-function _x13(i) {
- window._bulkData.splice(i, 1);
- _x10(window._bulkData);
-}
-function _x14() {
- if (!window._bulkData) window._bulkData = [];
- window._bulkData.push({ name: '', copies: 54, pages: 1, dataURL: null });
- _x10(window._bulkData);
-}
-function _x15() {
- var ws_data = [
- ['ProductName', 'LabelsPerPage', 'Pages'],
- ['Microfiber Cloth Duster', 54, 1],
- ['Car Wash Sponge', 30, 2],
- ['Glass Cleaner Spray', 20, 1]
- ];
- var wb = XLSX.utils.book_new();
- var ws = XLSX.utils.aoa_to_sheet(ws_data);
- ws['!cols'] = [{ wch: 35 }, { wch: 14 }, { wch: 8 }];
- XLSX.utils.book_append_sheet(wb, ws, 'Barcodes');
- XLSX.writeFile(wb, 'Barcode_Bulk_Template.xlsx');
-}
-function _x16() {
- if (!_x1b) { _x1a('status-single', '⚠️ Pehle barcode image upload karein.', true); return; }
- var name = document.getElementById('s_name').value.trim();
- if (!name) { _x1a('status-single', '⚠️ Product name enter karein.', true); return; }
- var copies = parseInt(document.getElementById('s_copies').value);
- var pages = parseInt(document.getElementById('s_pages').value) || 1;
- var fname = 'UNIGEN_' + name.replace(/[^a-zA-Z0-9 \-]/g,'').trim().replace(/\s+/g,'_').substring(0,50);
- _x1a('status-single', '⏳ PDF ban raha hai…', false);
- setTimeout(function() {
- try {
- _x18([{ name: name, copies: copies, pages: pages, dataURL: _x1b }], fname, function(ok, msg) {
- _x1a('status-single', ok ? '✅ ' + msg : '❌ ' + msg, !ok);
- });
- } catch(e) { _x1a('status-single', '❌ ' + e.message, true); }
- }, 80);
-}
-function _x17() {
- var data = window._bulkData || [];
- if (!data.length) { _x1a('status-bulk', '⚠️ Pehle data load karein.', true); return; }
- var missing = data.filter(function(r) { return !r.dataURL; }).map(function(r) { return r.name; });
- if (missing.length) { _x1a('status-bulk', '⚠️ Barcode missing: ' + missing.join(', '), true); return; }
- var fname = data.length === 1
- ? 'UNIGEN_' + data[0].name.replace(/[^a-zA-Z0-9 \-]/g,'').trim().replace(/\s+/g,'_').substring(0,50)
- : 'UNIGEN_Bulk_' + data.length + '_Products';
- _x1a('status-bulk', '⏳ PDF ban raha hai (' + data.length + ' _x28)…', false);
- setTimeout(function() {
- try {
- _x18(data, fname, function(ok, msg) {
- _x1a('status-bulk', ok ? '✅ ' + msg : '❌ ' + msg, !ok);
- });
- } catch(e) { _x1a('status-bulk', '❌ ' + e.message, true); }
- }, 80);
-}
-function _x18(_x28, _x26, _x27) {
- var jsPDF = window.jspdf.jsPDF;
- var doc = new jsPDF('p', 'mm', 'a4');
- var pageW = 210, pageH = 297;
- var _x24 = true;
- var idx = 0;
- function _x19() {
- if (idx >= _x28.length) {
- doc.save(_x26 + '.pdf');
- _x27(true, 'PDF download ho gayi: ' + _x26 + '.pdf');
- return;
- }
- var prod = _x28[idx++];
- var cfg = _x1e[prod.copies] || _x1e[54];
- var _x29 = pageW / cfg.cols;
- var _x2a = pageH / cfg.rows;
- var img = new Image();
- img.onload = function() {
- var ratio = img.width / img.height;
- var _x20 = _x2a * 0.70;
- var _x21 = _x29 * 0.85;
- var bW, bH;
- if (_x21 / ratio <= _x20) { bW = _x21; bH = _x21 / ratio; }
- else { bH = _x20; bW = _x20 * ratio; }
- for (var p = 0; p < (prod.pages || 1); p++) {
- var _x22 = 8;
- var _x23 = pageH - _x22;
- var cH = _x23 / cfg.rows;
- if (!_x24) doc.addPage(); _x24 = false;
- doc.setFillColor(15, 52, 96);
- doc.rect(0, 0, pageW, _x22, 'F');
- doc.setFontSize(9);
- doc.setFont('helvetica', 'bold');
- doc.setTextColor(255, 255, 255);
- doc.text(prod.name.toUpperCase(), pageW / 2, 5.5, { align: 'center' });
- doc.setFontSize(7);
- doc.setTextColor(200, 210, 255);
- doc.text('UNIGEN | Page ' + (p+1) + ' of ' + prod.pages + ' | ' + prod.copies + ' labels/page', pageW - 4, 5.5, { align: 'right' });
- doc.setTextColor(0, 0, 0);
- for (var row = 0; row < cfg.rows; row++) {
- for (var col = 0; col < cfg.cols; col++) {
- var x = col * _x29;
- var y = _x22 + row * cH;
- var ix = x + (_x29 - bW) / 2;
- var iy = y + (cH - bH - 4) / 2;
- doc.addImage(prod.dataURL, 'PNG', ix, iy, bW, bH);
- doc.setFontSize(7);
- doc.setFont('helvetica', 'bold');
- doc.text(prod.name, x + _x29 / 2, iy + bH + 3.5, { align: 'center' });
- doc.setDrawColor(200, 200, 200);
- doc.setLineDashPattern([1, 1], 0);
- doc.rect(x, y, _x29, cH);
- }
- }
- }
- _x19();
- };
- img.onerror = function() { _x27(false, 'Image load error: ' + prod.name); };
- img.src = prod.dataURL;
- }
- _x19();
-}
-function esc(s) { return String(s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function _x1a(id, msg, isError) {
- var el = document.getElementById(id);
- if (!el) return;
- el.textContent = msg;
- el.className = 'status-bar' + (isError ? ' error' : '');
- el.style.display = 'block';
-}
-window.onload = function() {
- window._bulkData = [];
-};
-window._x0a=_x0a;
-window._x0b=_x0b;
-window._x0c=_x0c;
-window._x0d=_x0d;
-window._x0e=_x0e;
-window._x0f=_x0f;
-window._x12=_x12;
-window._x13=_x13;
-window._x14=_x14;
-window._x15=_x15;
-window._x16=_x16;
-window._x17=_x17;
-window._x1a=_x1a;
-window.esc=esc;
 
+// ─── State ───────────────────────────────────
+var _singleURL = null;
+var _bulkExcelData = [];  // for Excel tab
+var _manualData = [];     // for Manual tab
+var _eanMap = {};         // ean/name → dataURL for Excel tab
+
+var _gc = {
+  10:{cols:2,rows:5}, 12:{cols:3,rows:4}, 15:{cols:3,rows:5},
+  20:{cols:4,rows:5}, 24:{cols:4,rows:6}, 30:{cols:5,rows:6},
+  54:{cols:6,rows:9}
+};
+
+// ─── Tab switch ──────────────────────────────
+function switchTab(t){
+  ['single','bulk','manual'].forEach(function(id){
+    document.getElementById('tab-'+id).style.display = id===t?'block':'none';
+  });
+  document.querySelectorAll('.tab').forEach(function(el,i){
+    el.classList.toggle('active',['single','bulk','manual'][i]===t);
+  });
+}
+
+// ─── Parse filename → {name, ean} ────────────
+// Logic:
+//  1. Remove extension
+//  2. Find all digit-only sequences ≥ 8 chars → EAN candidate
+//  3. Rest is product name (after removing EAN and trimming separators)
+function parseFilename(filename){
+  var base = filename.replace(/\.[^.]+$/, '').trim();
+  // Find EAN: sequence of 8+ digits
+  var eanMatch = base.match(/\b(\d{8,})\b/);
+  var ean = eanMatch ? eanMatch[1] : '';
+  var name = base;
+  if(ean){
+    name = base.replace(ean,'').replace(/[-_\s]+$/,'').replace(/^[-_\s]+/,'').trim();
+  }
+  // If entire filename is digits → pure EAN, no name
+  if(/^\d+$/.test(base)){
+    return {ean: base, name: ''};
+  }
+  // If no digits found → pure name
+  if(!ean){
+    return {ean: '', name: base};
+  }
+  return {ean: ean, name: name};
+}
+
+// ─── SINGLE TAB ─────────────────────────────
+function previewSingle(inp){
+  if(!inp.files||!inp.files[0])return;
+  var file = inp.files[0];
+  var parsed = parseFilename(file.name);
+  var r = new FileReader();
+  r.onload = function(e){
+    _singleURL = e.target.result;
+    document.getElementById('singlePreview').innerHTML = '<img src="'+_singleURL+'">';
+    // Auto-fill if fields are empty
+    var nameField = document.getElementById('s_name');
+    var eanField  = document.getElementById('s_ean');
+    if(!nameField.value && parsed.name){
+      nameField.value = parsed.name;
+      nameField.style.background = '#f0fff4';
+      nameField.style.borderColor = '#a7f3d0';
+    }
+    if(!eanField.value && parsed.ean){
+      eanField.value = parsed.ean;
+      eanField.style.background = '#f0fff4';
+      eanField.style.borderColor = '#a7f3d0';
+    }
+  };
+  r.readAsDataURL(file);
+}
+
+function generateSingle(){
+  if(!_singleURL){showSt('st-single','⚠️ Pehle barcode image upload karein.',1);return;}
+  var name = document.getElementById('s_name').value.trim();
+  var ean  = document.getElementById('s_ean').value.trim();
+  if(!name&&!ean){showSt('st-single','⚠️ Product name ya EAN enter karein.',1);return;}
+  var copies = parseInt(document.getElementById('s_copies').value)||54;
+  var pages  = parseInt(document.getElementById('s_pages').value)||1;
+  var fname  = 'UNIGEN_'+_sn(name||ean);
+  showSt('st-single','⏳ PDF ban raha hai…',0);
+  setTimeout(function(){
+    _buildPDF([{name:name,ean:ean,qty:copies,pages:pages,dataURL:_singleURL}], fname, function(ok,msg){
+      showSt('st-single',(ok?'✅ ':'❌ ')+msg, !ok);
+    });
+  },80);
+}
+
+// ─── BULK EXCEL TAB ──────────────────────────
+function doDragOver(e,id){e.preventDefault();document.getElementById(id).classList.add('dragover');}
+function doDragLeave(id){document.getElementById(id).classList.remove('dragover');}
+function doDropFile(e){e.preventDefault();doDragLeave('dropZone');var f=e.dataTransfer.files[0];if(f)readExcel(f);}
+
+function readExcel(file){
+  if(!file)return;
+  var r=new FileReader();
+  r.onload=function(e){
+    var wb=XLSX.read(e.target.result,{type:'binary'});
+    var ws=wb.Sheets[wb.SheetNames[0]];
+    var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    _bulkExcelData=[];
+    for(var i=1;i<rows.length;i++){
+      var row=rows[i];
+      var name=String(row[0]||'').trim();
+      var ean =String(row[1]||'').trim();
+      var qty =parseInt(row[2])||54;
+      var pages=parseInt(row[3])||1;
+      if(!name&&!ean)continue;
+      _bulkExcelData.push({name:name,ean:ean,qty:qty,pages:pages,dataURL:null,matched:false});
+    }
+    renderExcelTable();
+    matchExcelImages();
+    showSt('st-bulk','✅ '+_bulkExcelData.length+' products loaded. Ab barcode images upload karein.',0);
+  };
+  r.readAsBinaryString(file);
+}
+
+function loadBarcodeImages(inp, tab){
+  if(!inp.files||!inp.files.length)return;
+  var files=Array.from(inp.files);
+  var loaded=0;
+  files.forEach(function(file){
+    var base = file.name.replace(/\.[^.]+$/,'').trim();
+    var r=new FileReader();
+    r.onload=function(e){
+      var dataURL=e.target.result;
+      // Store by multiple keys for matching
+      _eanMap[base.toLowerCase()]=dataURL;
+      _eanMap[base]=dataURL;
+      var parsed=parseFilename(file.name);
+      if(parsed.ean){_eanMap[parsed.ean]=dataURL;_eanMap[parsed.ean.toLowerCase()]=dataURL;}
+      loaded++;
+      if(loaded===files.length){
+        matchExcelImages();
+        renderExcelTable();
+        var matched=_bulkExcelData.filter(function(d){return d.matched;}).length;
+        showSt('st-bulk','✅ '+files.length+' images loaded. '+matched+'/'+_bulkExcelData.length+' products matched.',0);
+      }
+    };
+    r.readAsDataURL(file);
+  });
+}
+
+function matchExcelImages(){
+  _bulkExcelData.forEach(function(row){
+    if(row.matched)return;
+    var eanKey=row.ean.toLowerCase();
+    var nameKey=row.name.toLowerCase();
+    // Try EAN exact
+    if(_eanMap[eanKey]){row.dataURL=_eanMap[eanKey];row.matched=true;return;}
+    if(_eanMap[row.ean]){row.dataURL=_eanMap[row.ean];row.matched=true;return;}
+    // Try name exact
+    if(_eanMap[nameKey]){row.dataURL=_eanMap[nameKey];row.matched=true;return;}
+    // Try partial
+    var keys=Object.keys(_eanMap);
+    for(var k=0;k<keys.length;k++){
+      var key=keys[k].toLowerCase();
+      if(eanKey&&(key.indexOf(eanKey)!==-1||eanKey.indexOf(key)!==-1)){
+        row.dataURL=_eanMap[keys[k]];row.matched=true;return;
+      }
+    }
+  });
+}
+
+function renderExcelTable(){
+  var tbody=document.getElementById('bulkExcelTbody');
+  if(!tbody)return;
+  tbody.innerHTML='';
+  _bulkExcelData.forEach(function(row,i){
+    var tr=document.createElement('tr');
+    var bcCell = row.matched
+      ? '<img src="'+row.dataURL+'" class="bc-thumb"><br><span style="color:#1e7e34;font-size:10px;font-weight:700;">✅ Matched</span>'
+      : '<span style="color:#e94560;font-size:11px;font-weight:700;">❌ Not matched</span>';
+    tr.innerHTML=
+      '<td>'+(i+1)+'</td>'+
+      '<td><input type="text" value="'+esc(row.name)+'" onchange="_bulkExcelData['+i+'].name=this.value"></td>'+
+      '<td><input type="text" value="'+esc(row.ean)+'" style="width:130px" onchange="_bulkExcelData['+i+'].ean=this.value;matchExcelImages();renderExcelTable();"></td>'+
+      '<td><input type="number" value="'+row.qty+'" min="1" max="100" style="width:60px" onchange="_bulkExcelData['+i+'].qty=parseInt(this.value)||54"></td>'+
+      '<td><input type="number" value="'+row.pages+'" min="1" max="20" style="width:50px" onchange="_bulkExcelData['+i+'].pages=parseInt(this.value)||1"></td>'+
+      '<td style="text-align:center">'+bcCell+'</td>'+
+      '<td><button class="del-btn" onclick="deleteExcelRow('+i+')">✕</button></td>';
+    tbody.appendChild(tr);
+  });
+  document.getElementById('bulkExcelTableWrap').style.display=_bulkExcelData.length?'block':'none';
+  document.getElementById('bulkExcelBtnRow').style.display=_bulkExcelData.length?'flex':'none';
+  document.getElementById('bulkExcelRowCount').textContent=
+    _bulkExcelData.length+' products · '+_bulkExcelData.filter(function(d){return d.matched;}).length+' matched';
+}
+
+function deleteExcelRow(i){_bulkExcelData.splice(i,1);renderExcelTable();}
+
+function generateBulkExcel(){
+  if(!_bulkExcelData.length){showSt('st-bulk','⚠️ Pehle data load karein.',1);return;}
+  var missing=_bulkExcelData.filter(function(r){return !r.dataURL;}).map(function(r){return r.name||r.ean;});
+  if(missing.length){showSt('st-bulk','⚠️ Barcode missing for: '+missing.join(', '),1);return;}
+  var fname=_bulkExcelData.length===1?'UNIGEN_'+_sn(_bulkExcelData[0].name):'UNIGEN_Bulk_'+_bulkExcelData.length+'_Products';
+  showSt('st-bulk','⏳ PDF ban raha hai ('+_bulkExcelData.length+' products)…',0);
+  setTimeout(function(){
+    _buildPDF(_bulkExcelData,fname,function(ok,msg){showSt('st-bulk',(ok?'✅ ':'❌ ')+msg,!ok);});
+  },80);
+}
+
+// ─── MANUAL BULK TAB ─────────────────────────
+
+function doDropSmart(e){
+  e.preventDefault();
+  doDragLeave('smartDropZone');
+  var files=Array.from(e.dataTransfer.files).filter(function(f){return f.type.startsWith('image/');});
+  if(files.length)processSmartFiles(files);
+}
+
+function smartBulkUpload(inp){
+  if(!inp.files||!inp.files.length)return;
+  processSmartFiles(Array.from(inp.files));
+}
+
+function processSmartFiles(files){
+  var loaded=0;
+  files.forEach(function(file){
+    var parsed=parseFilename(file.name);
+    var r=new FileReader();
+    r.onload=function(e){
+      var dataURL=e.target.result;
+      // Check if same EAN already exists in manualData
+      var existing=null;
+      if(parsed.ean){
+        for(var j=0;j<_manualData.length;j++){
+          if(_manualData[j].ean===parsed.ean){existing=_manualData[j];break;}
+        }
+      }
+      if(existing){
+        existing.dataURL=dataURL;
+        existing.matched=true;
+        if(parsed.name&&!existing.name)existing.name=parsed.name;
+      } else {
+        _manualData.push({
+          name: parsed.name,
+          ean:  parsed.ean,
+          qty:  54,
+          pages:1,
+          dataURL:dataURL,
+          matched:true
+        });
+      }
+      loaded++;
+      if(loaded===files.length){
+        renderManualTable();
+        showSt('st-manual','✅ '+files.length+' images added. Details check karein aur edit karein.',0);
+      }
+    };
+    r.readAsDataURL(file);
+  });
+}
+
+function addManualRow(){
+  _manualData.push({name:'',ean:'',qty:54,pages:1,dataURL:null,matched:false});
+  renderManualTable();
+  // Focus last row's name input
+  setTimeout(function(){
+    var inputs=document.querySelectorAll('#manualTbody tr:last-child input[type="text"]');
+    if(inputs[0])inputs[0].focus();
+  },50);
+}
+
+function deleteManualRow(i){_manualData.splice(i,1);renderManualTable();}
+function clearAll(){if(confirm('Sab rows delete kar dein?')){_manualData=[];renderManualTable();}}
+
+function loadManualBarcode(i,inp){
+  if(!inp.files||!inp.files[0])return;
+  var file=inp.files[0];
+  var parsed=parseFilename(file.name);
+  var r=new FileReader();
+  r.onload=function(e){
+    _manualData[i].dataURL=e.target.result;
+    _manualData[i].matched=true;
+    // Auto-fill name/ean if empty
+    if(!_manualData[i].name&&parsed.name) _manualData[i].name=parsed.name;
+    if(!_manualData[i].ean&&parsed.ean)   _manualData[i].ean=parsed.ean;
+    renderManualTable();
+  };
+  r.readAsDataURL(file);
+}
+
+function renderManualTable(){
+  var tbody=document.getElementById('manualTbody');
+  if(!tbody)return;
+  tbody.innerHTML='';
+  _manualData.forEach(function(row,i){
+    var tr=document.createElement('tr');
+    var nameClass=row.name&&row.matched?'auto-filled':'';
+    var eanClass =row.ean&&row.matched?'auto-filled':'';
+    var bcCell='';
+    if(row.matched&&row.dataURL){
+      bcCell='<img src="'+row.dataURL+'" class="bc-thumb"><br>'+
+             '<label for="mbc_'+i+'" class="btn btn-gray" style="padding:2px 7px;font-size:10px;cursor:pointer;margin-top:3px;display:inline-block;">↻ Change</label>'+
+             '<input type="file" id="mbc_'+i+'" accept="image/*" style="display:none" onchange="loadManualBarcode('+i+',this)">';
+    } else {
+      bcCell='<label for="mbc_'+i+'" class="btn btn-blue" style="padding:4px 10px;font-size:11px;cursor:pointer;display:inline-block;">📷 Upload</label>'+
+             '<input type="file" id="mbc_'+i+'" accept="image/*" style="display:none" onchange="loadManualBarcode('+i+',this)">';
+    }
+    tr.innerHTML=
+      '<td style="color:#888;">'+(i+1)+'</td>'+
+      '<td><input type="text" class="'+nameClass+'" value="'+esc(row.name)+'" placeholder="Product name" onchange="_manualData['+i+'].name=this.value;this.style.background=\'\'"></td>'+
+      '<td><input type="text" class="'+eanClass+'" value="'+esc(row.ean)+'" placeholder="EAN" style="width:130px" onchange="_manualData['+i+'].ean=this.value;this.style.background=\'\'"></td>'+
+      '<td><select onchange="_manualData['+i+'].qty=parseInt(this.value)">'+
+        [10,12,15,20,24,30,54].map(function(v){return '<option value="'+v+'"'+(v===row.qty?' selected':'')+'>'+v+'</option>';}).join('')+
+      '</select></td>'+
+      '<td><input type="number" value="'+row.pages+'" min="1" max="20" style="width:50px" onchange="_manualData['+i+'].pages=parseInt(this.value)||1"></td>'+
+      '<td style="text-align:center">'+bcCell+'</td>'+
+      '<td><button class="del-btn" onclick="deleteManualRow('+i+')">✕</button></td>';
+    tbody.appendChild(tr);
+  });
+  document.getElementById('manualTableWrap').style.display=_manualData.length?'block':'none';
+  document.getElementById('manualBtnRow').style.display=_manualData.length?'flex':'none';
+  document.getElementById('manualRowCount').textContent=
+    _manualData.length+' products · '+_manualData.filter(function(d){return d.matched;}).length+' with barcode';
+}
+
+function generateManual(){
+  if(!_manualData.length){showSt('st-manual','⚠️ Koi bhi product nahi hai.',1);return;}
+  var missing=_manualData.filter(function(r){return !r.dataURL;}).map(function(r,i){return r.name||r.ean||('Row '+(i+1));});
+  if(missing.length){showSt('st-manual','⚠️ Barcode image missing for: '+missing.join(', '),1);return;}
+  var fname=_manualData.length===1?'UNIGEN_'+_sn(_manualData[0].name||_manualData[0].ean):'UNIGEN_Bulk_'+_manualData.length+'_Products';
+  showSt('st-manual','⏳ PDF ban raha hai ('+_manualData.length+' products)…',0);
+  setTimeout(function(){
+    _buildPDF(_manualData,fname,function(ok,msg){showSt('st-manual',(ok?'✅ ':'❌ ')+msg,!ok);});
+  },80);
+}
+
+// ─── PDF Builder ─────────────────────────────
+function _buildPDF(products, filename, cb){
+  var jsPDF=window.jspdf.jsPDF;
+  var doc=new jsPDF('p','mm','a4');
+  var pageW=210,pageH=297;
+  var _firstPage=true;
+  var idx=0;
+  function next(){
+    if(idx>=products.length){doc.save(filename+'.pdf');cb(true,'PDF download shuru: '+filename+'.pdf');return;}
+    var prod=products[idx++];
+    var qty=parseInt(prod.qty)||54;
+    var cfg=_gc[qty]||_gc[54];
+    var cellW=pageW/cfg.cols;
+    var headerH=9;
+    var usableH=pageH-headerH;
+    var cellH=usableH/cfg.rows;
+    var img=new Image();
+    img.onload=function(){
+      var ar=img.width/img.height;
+      var maxW=cellW*0.82, maxH=cellH*0.68;
+      var bW,bH;
+      if(maxW/ar<=maxH){bW=maxW;bH=maxW/ar;}
+      else{bH=maxH;bW=maxH*ar;}
+      for(var p=0;p<(prod.pages||1);p++){
+        if(!_firstPage)doc.addPage();_firstPage=false;
+        // Header bar
+        doc.setFillColor(15,52,96);
+        doc.rect(0,0,pageW,headerH,'F');
+        doc.setFontSize(9);doc.setFont('helvetica','bold');
+        doc.setTextColor(255,255,255);
+        doc.text((prod.name||prod.ean||'').toUpperCase().substring(0,60),4,6);
+        if(prod.ean){
+          doc.setFontSize(7.5);doc.setTextColor(180,210,255);
+          doc.text('EAN: '+prod.ean,pageW/2,6,{align:'center'});
+        }
+        doc.setFontSize(7);doc.setTextColor(180,200,255);
+        doc.text('UNIGEN | Page '+(p+1)+' of '+(prod.pages||1),pageW-3,6,{align:'right'});
+        doc.setTextColor(0,0,0);
+        // Labels grid
+        for(var row=0;row<cfg.rows;row++){
+          for(var col=0;col<cfg.cols;col++){
+            var x=col*cellW;
+            var y=headerH+row*cellH;
+            var ix=x+(cellW-bW)/2;
+            var iy=y+(cellH-bH-7)/2;
+            doc.addImage(prod.dataURL,'PNG',ix,iy,bW,bH);
+            doc.setFontSize(6);doc.setFont('helvetica','bold');
+            doc.text(prod.name||'',x+cellW/2,iy+bH+3,{align:'center',maxWidth:cellW-2});
+            if(prod.ean){
+              doc.setFontSize(5.5);doc.setFont('helvetica','normal');
+              doc.text(prod.ean,x+cellW/2,iy+bH+6.5,{align:'center'});
+            }
+            doc.setDrawColor(190,190,190);
+            doc.setLineDashPattern([1,1],0);
+            doc.rect(x,y,cellW,cellH);
+          }
+        }
+      }
+      next();
+    };
+    img.onerror=function(){cb(false,'Image error: '+(prod.name||prod.ean));};
+    img.src=prod.dataURL;
+  }
+  next();
+}
+
+// ─── Template download ───────────────────────
+function downloadTemplate(){
+  var ws_data=[
+    ['ProductName','EAN','LabelsPerPage','Pages'],
+    ['Microfiber Cloth Duster 40x40','8901234567890',54,1],
+    ['Car Wash Sponge Pad','8901234567891',30,2],
+    ['Glass Cleaner Spray 500ml','8901234567892',20,1]
+  ];
+  var wb=XLSX.utils.book_new();
+  var ws=XLSX.utils.aoa_to_sheet(ws_data);
+  ws['!cols']=[{wch:38},{wch:16},{wch:14},{wch:7}];
+  XLSX.utils.book_append_sheet(wb,ws,'Barcodes');
+  XLSX.writeFile(wb,'UNIGEN_Barcode_Template.xlsx');
+}
+
+// ─── Helpers ─────────────────────────────────
+function _sn(s){return String(s||'').replace(/[^a-zA-Z0-9 \-]/g,'').trim().replace(/\s+/g,'_').substring(0,50)||'Label';}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function showSt(id,msg,isErr){
+  var el=document.getElementById(id);if(!el)return;
+  el.textContent=msg;
+  el.className='status-bar'+(isErr?' error':'');
+  el.style.display=msg?'block':'none';
+}
+
+// ─── Expose globals ──────────────────────────
+window.switchTab=switchTab;
+window.previewSingle=previewSingle;
+window.generateSingle=generateSingle;
+window.doDragOver=doDragOver;
+window.doDragLeave=doDragLeave;
+window.doDropFile=doDropFile;
+window.doDropSmart=doDropSmart;
+window.readExcel=readExcel;
+window.loadBarcodeImages=loadBarcodeImages;
+window.matchExcelImages=matchExcelImages;
+window.renderExcelTable=renderExcelTable;
+window.deleteExcelRow=deleteExcelRow;
+window.generateBulkExcel=generateBulkExcel;
+window.smartBulkUpload=smartBulkUpload;
+window.addManualRow=addManualRow;
+window.deleteManualRow=deleteManualRow;
+window.clearAll=clearAll;
+window.loadManualBarcode=loadManualBarcode;
+window.renderManualTable=renderManualTable;
+window.generateManual=generateManual;
+window.downloadTemplate=downloadTemplate;
+window._bulkExcelData=_bulkExcelData;
+window._manualData=_manualData;
 </script>
 </body>
 </html>
