@@ -1,324 +1,412 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <base target="_top">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barcode Label Generator</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f0f2f5;
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 600px;
-            margin: 40px auto;
-            background: #fff;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 5px;
-        }
-
-        .subtitle {
-            text-align: center;
-            color: #777;
-            margin-bottom: 30px;
-            font-size: 14px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 600;
-            color: #444;
-        }
-
-        .form-group input[type="text"],
-        .form-group input[type="number"],
-        .form-group select {
-            width: 100%;
-            padding: 10px 14px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 15px;
-            transition: border-color 0.3s;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            border-color: #4a90d9;
-            outline: none;
-        }
-
-        .form-group input[type="file"] {
-            padding: 8px;
-        }
-
-        .preview {
-            margin-top: 10px;
-            border: 2px dashed #ddd;
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            min-height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .preview img {
-            max-width: 200px;
-            max-height: 80px;
-        }
-
-        .preview p {
-            color: #aaa;
-        }
-
-        .btn-generate {
-            width: 100%;
-            padding: 14px;
-            background: #e74c3c;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s;
-            margin-bottom: 10px;
-        }
-
-        .btn-generate:hover {
-            background: #c0392b;
-        }
-
-        .btn-generate:disabled {
-            background: #bbb;
-            cursor: not-allowed;
-        }
-
-        .status {
-            text-align: center;
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 8px;
-            display: none;
-        }
-
-        .status.success {
-            display: block;
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .status.loading {
-            display: block;
-            background: #fff3cd;
-            color: #856404;
-        }
-    </style>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>UNIGEN Barcode Label Generator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#1a1a2e;min-height:100vh;-webkit-user-select:none;user-select:none;}
+.topbar{background:#0f3460;padding:14px 28px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 12px rgba(0,0,0,.4);}
+.topbar .brand{font-size:22px;font-weight:900;letter-spacing:3px;color:#e94560;}
+.topbar .sub{font-size:12px;color:#aac;font-weight:400;letter-spacing:1px;}
+.panel{max-width:980px;margin:24px auto;padding:0 16px 40px;}
+.tabs{display:flex;gap:4px;margin-bottom:0;}
+.tab{padding:10px 22px;background:#16213e;color:#aab;border:none;border-radius:8px 8px 0 0;cursor:pointer;font-size:13px;font-weight:700;letter-spacing:.5px;transition:background .2s,color .2s;}
+.tab.active{background:#fff;color:#0f3460;}
+.card{background:#fff;border-radius:0 8px 8px 8px;padding:28px;box-shadow:0 4px 24px rgba(0,0,0,.25);}
+.sec-title{font-size:13px;font-weight:900;color:#0f3460;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;padding-bottom:6px;border-bottom:2px solid #e94560;display:inline-block;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group label{font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.5px;}
+.form-group input,.form-group select{padding:9px 12px;border:1.5px solid #dde;border-radius:6px;font-size:13px;transition:border-color .2s;}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:#e94560;}
+.preview-box{border:2px dashed #c0c8e0;border-radius:8px;padding:18px;background:#f7f9ff;margin-bottom:20px;display:flex;align-items:center;justify-content:center;min-height:90px;}
+.preview-box img{max-height:60px;max-width:220px;}
+.preview-box p{color:#aaa;font-size:13px;}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
+.btn{padding:11px 22px;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.4px;transition:transform .1s,opacity .2s;}
+.btn:hover{opacity:.88;transform:translateY(-1px);}
+.btn-blue{background:#0f3460;color:#fff;}
+.btn-red{background:#e94560;color:#fff;}
+.btn-green{background:#1e7e34;color:#fff;}
+.btn-orange{background:#d97706;color:#fff;}
+.btn-gray{background:#6c757d;color:#fff;display:inline-block;}
+.bulk-drop{border:2.5px dashed #c0c8e0;border-radius:10px;padding:32px;text-align:center;background:#f7f9ff;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:20px;}
+.bulk-drop:hover,.bulk-drop.dragover{border-color:#e94560;background:#fff0f3;}
+.bulk-drop .icon{font-size:36px;margin-bottom:8px;}
+.bulk-drop p{font-size:14px;color:#555;}
+.bulk-drop small{color:#999;font-size:11px;}
+#excelFile{display:none;}
+.table-wrap{overflow-x:auto;margin-top:14px;}
+table.data-tbl{width:100%;border-collapse:collapse;font-size:12px;}
+table.data-tbl th{background:#0f3460;color:#fff;padding:8px 10px;text-align:left;font-weight:700;}
+table.data-tbl td{padding:7px 10px;border-bottom:1px solid #eee;vertical-align:middle;}
+table.data-tbl tr:nth-child(even) td{background:#f9f9ff;}
+table.data-tbl tr:hover td{background:#fff0f3;}
+table.data-tbl td input{width:100%;border:1px solid #dde;border-radius:4px;padding:4px 6px;font-size:12px;}
+table.data-tbl td select{border:1px solid #dde;border-radius:4px;padding:4px 6px;font-size:12px;}
+.del-btn{background:#e94560;color:#fff;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:11px;}
+.row-count{font-size:12px;color:#888;margin-top:8px;}
+.status-bar{background:#e8f5e9;border:1px solid #a5d6a7;border-radius:6px;padding:10px 16px;font-size:13px;font-weight:600;color:#1b5e20;margin-top:14px;display:none;}
+.status-bar.error{background:#fdecea;border-color:#ef9a9a;color:#b71c1c;}
+.template-note{background:#fffbea;border:1px solid #f6d860;border-radius:6px;padding:10px 14px;font-size:12px;color:#7a5c00;margin-bottom:18px;}
+.template-note strong{color:#b45309;}
+.preview-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px;}
+</style>
 </head>
 <body>
-    <div class="container" id="input-section">
-        <h1>Barcode Label Generator</h1>
-        <p class="subtitle">Upload barcode + Enter name = Direct PDF download (no cut issue!)</p>
 
-        <div class="form-group">
-            <label for="barcode-upload">Upload Barcode Image:</label>
-            <input type="file" id="barcode-upload" accept="image/*">
-            <div class="preview" id="preview-area">
-                <p>No image selected</p>
-            </div>
-        </div>
+<div class="topbar">
+  <div>
+    <div class="brand">UNIGEN</div>
+    <div class="sub">Barcode Label Generator — Bulk Edition</div>
+  </div>
+</div>
 
-        <div class="form-group">
-            <label for="label-name">Name (appears under barcode):</label>
-            <input type="text" id="label-name" placeholder="Enter product/item name">
-        </div>
+<div class="panel">
+  <div class="tabs">
+    <button class="tab active" onclick="_x0a('single')">Single Product</button>
+    <button class="tab" onclick="_x0a('bulk')">Bulk Upload</button>
+  </div>
 
-        <div class="form-group">
-            <label for="copies">Number of labels per page:</label>
-            <select id="copies">
-                <option value="10">10 (2 columns x 5 rows)</option>
-                <option value="12">12 (3 columns x 4 rows)</option>
-                <option value="15">15 (3 columns x 5 rows)</option>
-                <option value="20">20 (4 columns x 5 rows)</option>
-                <option value="24">24 (4 columns x 6 rows)</option>
-                <option value="30">30 (5 columns x 6 rows)</option>
-                <option value="54" selected>54 (6 columns x 9 rows)</option>
-            </select>
-        </div>
+  <!-- SINGLE -->
+  <div class="card" id="tab-single">
+    <span class="sec-title">Single Barcode Label</span>
+    <div class="form-grid" style="margin-top:14px;">
+      <div class="form-group" style="grid-column:1/-1;">
+        <label>Upload Barcode Image</label>
+        <input type="file" id="s_barcode" accept="image/*" onchange="_x0b(this)">
+        <div class="preview-box" id="singlePreview"><p>No image selected</p></div>
+      </div>
+      <div class="form-group">
+        <label>Product Name</label>
+        <input type="text" id="s_name" placeholder="e.g. Microfiber Duster">
+      </div>
+      <div class="form-group">
+        <label>Labels Per Page</label>
+        <select id="s_copies">
+          <option value="10">10 (2×5)</option>
+          <option value="12">12 (3×4)</option>
+          <option value="15">15 (3×5)</option>
+          <option value="20">20 (4×5)</option>
+          <option value="24">24 (4×6)</option>
+          <option value="30">30 (5×6)</option>
+          <option value="54" selected>54 (6×9)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Number of Pages</label>
+        <input type="number" id="s_pages" value="1" min="1" max="20">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-red" onclick="_x16()">Download PDF</button>
+    </div>
+    <div id="status-single" class="status-bar"></div>
+  </div>
 
-        <div class="form-group">
-            <label for="pages">Number of pages:</label>
-            <input type="number" id="pages" value="1" min="1" max="20">
-        </div>
-
-        <button id="generate-btn" class="btn-generate">Save as PDF (Direct Download)</button>
-
-        <div class="status" id="status-msg"></div>
+  <!-- BULK -->
+  <div class="card" id="tab-bulk" style="display:none;">
+    <div class="template-note">
+      <strong>Excel format:</strong> Columns — <code>ProductName | LabelsPerPage | Pages</code><br>
+      Row 1 = Header (skip), Row 2+ = data. Phir har product ke liye barcode image alag upload karein.
+      <br><br>
+      <button class="btn btn-orange" style="font-size:11px;padding:6px 14px;" onclick="_x15()">Download Sample Template</button>
     </div>
 
-    <script>
-        var barcodeUpload = document.getElementById('barcode-upload');
-        var previewArea = document.getElementById('preview-area');
-        var labelNameInput = document.getElementById('label-name');
-        var copiesSelect = document.getElementById('copies');
-        var pagesInput = document.getElementById('pages');
-        var generateBtn = document.getElementById('generate-btn');
-        var statusMsg = document.getElementById('status-msg');
+    <span class="sec-title">Upload Excel / CSV</span>
+    <div style="margin-top:12px;">
+      <div class="bulk-drop" id="dropZone"
+           onclick="document.getElementById('excelFile').click()"
+           ondragover="_x0c(event)" ondragleave="_x0d()" ondrop="_x0e(event)">
+        <div class="icon">📊</div>
+        <p>Click ya drag karke Excel/CSV upload karein</p>
+        <small>.xlsx, .xls, .csv supported</small>
+      </div>
+      <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" onchange="_x0f(this.files[0])">
+    </div>
 
-        var barcodeDataURL = null;
+    <div id="bulkTableWrap" style="display:none;">
+      <div class="preview-header">
+        <span class="sec-title" style="margin-bottom:0;">Products</span>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span id="bulkRowCount" class="row-count"></span>
+          <button class="btn btn-blue" style="font-size:11px;padding:6px 14px;" onclick="_x14()">+ Add Row</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-tbl">
+          <thead>
+            <tr>
+              <th>#</th><th>Product Name</th><th>Labels/Page</th>
+              <th>Pages</th><th>Barcode Image</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="bulkTableBody"></tbody>
+        </table>
+      </div>
+    </div>
 
-        var gridConfig = {
-            10: { cols: 2, rows: 5 },
-            12: { cols: 3, rows: 4 },
-            15: { cols: 3, rows: 5 },
-            20: { cols: 4, rows: 5 },
-            24: { cols: 4, rows: 6 },
-            30: { cols: 5, rows: 6 },
-            54: { cols: 6, rows: 9 }
-        };
+    <div class="btn-row" id="bulkBtnRow" style="display:none;">
+      <button class="btn btn-red" onclick="_x17()">Download PDF (All Products)</button>
+    </div>
+    <div id="status-bulk" class="status-bar"></div>
+  </div>
+</div>
 
-        barcodeUpload.addEventListener('change', function(e) {
-            var file = e.target.files[0];
-            if (file) {
-                var reader = new FileReader();
-                reader.onload = function(event) {
-                    barcodeDataURL = event.target.result;
-                    previewArea.innerHTML = '<img src="' + barcodeDataURL + '" alt="Barcode Preview">';
-                };
-                reader.readAsDataURL(file);
-            }
-        });
+<script>
+(function(){
+var _d=document;
+_d.addEventListener('contextmenu',function(e){e.preventDefault();return false;});
+_d.addEventListener('keydown',function(e){
+  if((e.ctrlKey&&(e.key==='u'||e.key==='s'||e.key==='U'||e.key==='S'))||e.key==='F12'){e.preventDefault();return false;}
+  if(e.ctrlKey&&e.shiftKey&&(e.key==='I'||e.key==='J'||e.key==='C')){e.preventDefault();return false;}
+});
+})();
+var _x1d = {}; 
+var _x1c = 'single';
+var _x1b = null;
+var _x1e = {
+ 10: { cols: 2, rows: 5 },
+ 12: { cols: 3, rows: 4 },
+ 15: { cols: 3, rows: 5 },
+ 20: { cols: 4, rows: 5 },
+ 24: { cols: 4, rows: 6 },
+ 30: { cols: 5, rows: 6 },
+ 54: { cols: 6, rows: 9 }
+};
+function _x0a(t) {
+ _x1c = t;
+ ['single','bulk'].forEach(function(id) {
+ document.getElementById('tab-' + id).style.display = id === t ? 'block' : 'none';
+ });
+ document.querySelectorAll('.tab').forEach(function(el, i) {
+ el.classList.toggle('active', ['single','bulk'][i] === t);
+ });
+}
+function _x0b(input) {
+ if (!input.files || !input.files[0]) return;
+ var reader = new FileReader();
+ reader.onload = function(e) {
+ _x1b = e.target.result;
+ document.getElementById('singlePreview').innerHTML = '<img src="' + _x1b + '">';
+ };
+ reader.readAsDataURL(input.files[0]);
+}
+function _x0c(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('dragover'); }
+function _x0d() { document.getElementById('dropZone').classList.remove('dragover'); }
+function _x0e(e) {
+ e.preventDefault(); _x0d();
+ var f = e.dataTransfer.files[0];
+ if (f) _x0f(f);
+}
+function _x0f(file) {
+ if (!file) return;
+ var reader = new FileReader();
+ reader.onload = function(e) {
+ var wb = XLSX.read(e.target.result, { type: 'binary' });
+ var ws = wb.Sheets[wb.SheetNames[0]];
+ var rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+ var _x1f = [];
+ for (var i = 1; i < rows.length; i++) {
+ var r = rows[i];
+ var name = String(r[0] || '').trim();
+ var copies = parseInt(r[1]) || 54;
+ var pages = parseInt(r[2]) || 1;
+ if (!name) continue;
+ _x1f.push({ name: name, copies: copies, pages: pages, dataURL: null, fileInput: null });
+ }
+ _x10(_x1f);
+ _x1a('status-bulk', '✅ ' + _x1f.length + ' _x28 _x1f. Ab har product ke liye barcode image upload karein.', false);
+ };
+ reader.readAsBinaryString(file);
+}
+function _x10(data) {
+ var tbody = document.getElementById('bulkTableBody');
+ tbody.innerHTML = '';
+ window._bulkData = data;
+ data.forEach(function(row, i) {
+ var tr = document.createElement('tr');
+ tr.innerHTML =
+ '<td>' + (i+1) + '</td>' +
+ '<td><input value="' + esc(row.name) + '" onchange="window._bulkData[' + i + '].name=this.value"></td>' +
+ '<td><select onchange="window._bulkData[' + i + '].copies=parseInt(this.value)">' + _x11(row.copies) + '</select></td>' +
+ '<td><input type="number" value="' + row.pages + '" min="1" max="20" style="width:55px" onchange="window._bulkData[' + i + '].pages=parseInt(this.value)||1"></td>' +
+ '<td>' +
+ '<input type="file" id="bc_' + i + '" accept="image/*" style="display:none" onchange="_x12(' + i + ',this)">' +
+ '<label for="bc_' + i + '" class="btn btn-gray" style="padding:5px 10px;font-size:11px;cursor:pointer;" id="lbl_' + i + '">📷 Upload</label>' +
+ '</td>' +
+ '<td><button class="del-btn" onclick="_x13(' + i + ')">✕</button></td>';
+ tbody.appendChild(tr);
+ });
+ document.getElementById('bulkTableWrap').style.display = data.length ? 'block' : 'none';
+ document.getElementById('bulkBtnRow').style.display = data.length ? 'flex' : 'none';
+ document.getElementById('bulkRowCount').textContent = data.length + ' _x28';
+}
+function _x11(selected) {
+ var opts = [10,12,15,20,24,30,54];
+ return opts.map(function(v) {
+ return '<option value="' + v + '"' + (v === selected ? ' selected' : '') + '>' + v + '</option>';
+ }).join('');
+}
+function _x12(i, input) {
+ if (!input.files || !input.files[0]) return;
+ var reader = new FileReader();
+ reader.onload = function(e) {
+ window._bulkData[i].dataURL = e.target.result;
+ document.getElementById('lbl_' + i).textContent = '✅ Loaded';
+ document.getElementById('lbl_' + i).style.background = '#1e7e34';
+ };
+ reader.readAsDataURL(input.files[0]);
+}
+function _x13(i) {
+ window._bulkData.splice(i, 1);
+ _x10(window._bulkData);
+}
+function _x14() {
+ if (!window._bulkData) window._bulkData = [];
+ window._bulkData.push({ name: '', copies: 54, pages: 1, dataURL: null });
+ _x10(window._bulkData);
+}
+function _x15() {
+ var ws_data = [
+ ['ProductName', 'LabelsPerPage', 'Pages'],
+ ['Microfiber Cloth Duster', 54, 1],
+ ['Car Wash Sponge', 30, 2],
+ ['Glass Cleaner Spray', 20, 1]
+ ];
+ var wb = XLSX.utils.book_new();
+ var ws = XLSX.utils.aoa_to_sheet(ws_data);
+ ws['!cols'] = [{ wch: 35 }, { wch: 14 }, { wch: 8 }];
+ XLSX.utils.book_append_sheet(wb, ws, 'Barcodes');
+ XLSX.writeFile(wb, 'Barcode_Bulk_Template.xlsx');
+}
+function _x16() {
+ if (!_x1b) { _x1a('status-single', '⚠️ Pehle barcode image upload karein.', true); return; }
+ var name = document.getElementById('s_name').value.trim();
+ if (!name) { _x1a('status-single', '⚠️ Product name enter karein.', true); return; }
+ var copies = parseInt(document.getElementById('s_copies').value);
+ var pages = parseInt(document.getElementById('s_pages').value) || 1;
+ var fname = 'UNIGEN_' + name.replace(/[^a-zA-Z0-9 \-]/g,'').trim().replace(/\s+/g,'_').substring(0,50);
+ _x1a('status-single', '⏳ PDF ban raha hai…', false);
+ setTimeout(function() {
+ try {
+ _x18([{ name: name, copies: copies, pages: pages, dataURL: _x1b }], fname, function(ok, msg) {
+ _x1a('status-single', ok ? '✅ ' + msg : '❌ ' + msg, !ok);
+ });
+ } catch(e) { _x1a('status-single', '❌ ' + e.message, true); }
+ }, 80);
+}
+function _x17() {
+ var data = window._bulkData || [];
+ if (!data.length) { _x1a('status-bulk', '⚠️ Pehle data load karein.', true); return; }
+ var missing = data.filter(function(r) { return !r.dataURL; }).map(function(r) { return r.name; });
+ if (missing.length) { _x1a('status-bulk', '⚠️ Barcode missing: ' + missing.join(', '), true); return; }
+ var fname = data.length === 1
+ ? 'UNIGEN_' + data[0].name.replace(/[^a-zA-Z0-9 \-]/g,'').trim().replace(/\s+/g,'_').substring(0,50)
+ : 'UNIGEN_Bulk_' + data.length + '_Products';
+ _x1a('status-bulk', '⏳ PDF ban raha hai (' + data.length + ' _x28)…', false);
+ setTimeout(function() {
+ try {
+ _x18(data, fname, function(ok, msg) {
+ _x1a('status-bulk', ok ? '✅ ' + msg : '❌ ' + msg, !ok);
+ });
+ } catch(e) { _x1a('status-bulk', '❌ ' + e.message, true); }
+ }, 80);
+}
+function _x18(_x28, _x26, _x27) {
+ var jsPDF = window.jspdf.jsPDF;
+ var doc = new jsPDF('p', 'mm', 'a4');
+ var pageW = 210, pageH = 297;
+ var _x24 = true;
+ var idx = 0;
+ function _x19() {
+ if (idx >= _x28.length) {
+ doc.save(_x26 + '.pdf');
+ _x27(true, 'PDF download ho gayi: ' + _x26 + '.pdf');
+ return;
+ }
+ var prod = _x28[idx++];
+ var cfg = _x1e[prod.copies] || _x1e[54];
+ var _x29 = pageW / cfg.cols;
+ var _x2a = pageH / cfg.rows;
+ var img = new Image();
+ img.onload = function() {
+ var ratio = img.width / img.height;
+ var _x20 = _x2a * 0.70;
+ var _x21 = _x29 * 0.85;
+ var bW, bH;
+ if (_x21 / ratio <= _x20) { bW = _x21; bH = _x21 / ratio; }
+ else { bH = _x20; bW = _x20 * ratio; }
+ for (var p = 0; p < (prod.pages || 1); p++) {
+ var _x22 = 8;
+ var _x23 = pageH - _x22;
+ var cH = _x23 / cfg.rows;
+ if (!_x24) doc.addPage(); _x24 = false;
+ doc.setFillColor(15, 52, 96);
+ doc.rect(0, 0, pageW, _x22, 'F');
+ doc.setFontSize(9);
+ doc.setFont('helvetica', 'bold');
+ doc.setTextColor(255, 255, 255);
+ doc.text(prod.name.toUpperCase(), pageW / 2, 5.5, { align: 'center' });
+ doc.setFontSize(7);
+ doc.setTextColor(200, 210, 255);
+ doc.text('UNIGEN | Page ' + (p+1) + ' of ' + prod.pages + ' | ' + prod.copies + ' labels/page', pageW - 4, 5.5, { align: 'right' });
+ doc.setTextColor(0, 0, 0);
+ for (var row = 0; row < cfg.rows; row++) {
+ for (var col = 0; col < cfg.cols; col++) {
+ var x = col * _x29;
+ var y = _x22 + row * cH;
+ var ix = x + (_x29 - bW) / 2;
+ var iy = y + (cH - bH - 4) / 2;
+ doc.addImage(prod.dataURL, 'PNG', ix, iy, bW, bH);
+ doc.setFontSize(7);
+ doc.setFont('helvetica', 'bold');
+ doc.text(prod.name, x + _x29 / 2, iy + bH + 3.5, { align: 'center' });
+ doc.setDrawColor(200, 200, 200);
+ doc.setLineDashPattern([1, 1], 0);
+ doc.rect(x, y, _x29, cH);
+ }
+ }
+ }
+ _x19();
+ };
+ img.onerror = function() { _x27(false, 'Image load error: ' + prod.name); };
+ img.src = prod.dataURL;
+ }
+ _x19();
+}
+function esc(s) { return String(s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function _x1a(id, msg, isError) {
+ var el = document.getElementById(id);
+ if (!el) return;
+ el.textContent = msg;
+ el.className = 'status-bar' + (isError ? ' error' : '');
+ el.style.display = 'block';
+}
+window.onload = function() {
+ window._bulkData = [];
+};
+window._x0a=_x0a;
+window._x0b=_x0b;
+window._x0c=_x0c;
+window._x0d=_x0d;
+window._x0e=_x0e;
+window._x0f=_x0f;
+window._x12=_x12;
+window._x13=_x13;
+window._x14=_x14;
+window._x15=_x15;
+window._x16=_x16;
+window._x17=_x17;
+window._x1a=_x1a;
+window.esc=esc;
 
-        generateBtn.addEventListener('click', function() {
-            if (!barcodeDataURL) {
-                alert('Please upload a barcode image first!');
-                return;
-            }
-
-            var labelName = labelNameInput.value.trim();
-            if (!labelName) {
-                alert('Please enter a name for the label!');
-                return;
-            }
-
-            statusMsg.className = 'status loading';
-            statusMsg.textContent = 'Generating PDF... Please wait...';
-            generateBtn.disabled = true;
-
-            setTimeout(function() {
-                generatePDF(labelName);
-            }, 100);
-        });
-
-        function generatePDF(labelName) {
-            try {
-                var jsPDF = window.jspdf.jsPDF;
-                var labelsPerPage = parseInt(copiesSelect.value);
-                var numPages = parseInt(pagesInput.value);
-                var config = gridConfig[labelsPerPage];
-
-                var pageWidth = 210;
-                var pageHeight = 297;
-
-                var doc = new jsPDF('p', 'mm', 'a4');
-
-                var cellWidth = pageWidth / config.cols;
-                var cellHeight = pageHeight / config.rows;
-
-                var img = new Image();
-                img.onload = function() {
-                    var imgRatio = img.width / img.height;
-
-                    var barcodeMaxHeight = cellHeight * 0.75;
-                    var barcodeMaxWidth = cellWidth * 0.9;
-
-                    var barcodeWidth, barcodeHeight;
-                    if (barcodeMaxWidth / imgRatio <= barcodeMaxHeight) {
-                        barcodeWidth = barcodeMaxWidth;
-                        barcodeHeight = barcodeMaxWidth / imgRatio;
-                    } else {
-                        barcodeHeight = barcodeMaxHeight;
-                        barcodeWidth = barcodeMaxHeight * imgRatio;
-                    }
-
-                    for (var p = 0; p < numPages; p++) {
-                        if (p > 0) {
-                            doc.addPage();
-                        }
-
-                        for (var row = 0; row < config.rows; row++) {
-                            for (var col = 0; col < config.cols; col++) {
-                                var x = col * cellWidth;
-                                var y = row * cellHeight;
-
-                                var imgX = x + (cellWidth - barcodeWidth) / 2;
-                                var imgY = y + (cellHeight - barcodeHeight - 4) / 2;
-
-                                doc.addImage(barcodeDataURL, 'PNG', imgX, imgY, barcodeWidth, barcodeHeight);
-
-                                doc.setFontSize(10);
-                                doc.setFont('helvetica', 'bold');
-                                var textX = x + cellWidth / 2;
-                                var textY = imgY + barcodeHeight + 3.5;
-                                doc.text(labelName, textX, textY, { align: 'center' });
-
-                                doc.setDrawColor(200, 200, 200);
-                                doc.setLineDashPattern([1, 1], 0);
-                                doc.rect(x, y, cellWidth, cellHeight);
-                            }
-                        }
-                    }
-
-                    doc.save(labelName + '.pdf');
-
-                    statusMsg.className = 'status success';
-                    statusMsg.textContent = 'PDF saved successfully! Check your downloads folder.';
-                    generateBtn.disabled = false;
-                };
-
-                img.onerror = function() {
-                    statusMsg.className = 'status';
-                    statusMsg.style.display = 'block';
-                    statusMsg.style.background = '#f8d7da';
-                    statusMsg.style.color = '#721c24';
-                    statusMsg.textContent = 'Error loading image. Please try again.';
-                    generateBtn.disabled = false;
-                };
-
-                img.src = barcodeDataURL;
-
-            } catch(e) {
-                statusMsg.className = 'status';
-                statusMsg.style.display = 'block';
-                statusMsg.style.background = '#f8d7da';
-                statusMsg.style.color = '#721c24';
-                statusMsg.textContent = 'Error: ' + e.message;
-                generateBtn.disabled = false;
-            }
-        }
-    </script>
+</script>
 </body>
 </html>
