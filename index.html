@@ -7,6 +7,7 @@
 <title>UNIGEN Barcode Label Generator</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 @media print { body { display: none !important; } }
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -36,6 +37,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#1a1a2e;min-height:100vh
 .btn-orange{background:#d97706;color:#fff;}
 .btn-green{background:#1e7e34;color:#fff;}
 .btn-gray{background:#6c757d;color:#fff;}
+.btn-purple{background:#7c3aed;color:#fff;}
 .drop-zone{border:2.5px dashed #c0c8e0;border-radius:10px;padding:28px;text-align:center;background:#f7f9ff;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:6px;}
 .drop-zone:hover,.drop-zone.dragover{border-color:#e94560;background:#fff0f3;}
 .drop-zone .dz-icon{font-size:32px;margin-bottom:6px;}
@@ -75,6 +77,9 @@ table.dtbl td input.auto-filled{background:#f0fff4;border-color:#a7f3d0;color:#0
 .fname-hint strong{color:#166534;}
 .fname-hint code{background:#dcfce7;padding:1px 6px;border-radius:3px;font-family:monospace;font-size:11px;}
 .parsed-tag{display:inline-block;background:#dbeafe;color:#1e40af;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;margin-left:4px;}
+.progress-wrap{background:#f0f0f0;border-radius:8px;overflow:hidden;margin-top:10px;display:none;}
+.progress-bar{height:10px;background:linear-gradient(90deg,#e94560,#7c3aed);border-radius:8px;transition:width .3s;width:0%;}
+.progress-label{font-size:11px;color:#555;margin-top:4px;text-align:center;}
 </style>
 </head>
 <body>
@@ -96,14 +101,12 @@ table.dtbl td input.auto-filled{background:#f0fff4;border-color:#a7f3d0;color:#0
   <!-- SINGLE TAB -->
   <div class="card" id="tab-single">
     <span class="sec-title">Single Barcode Label</span>
-
     <div class="fname-hint">
       <strong>&#128161; Smart Image Name Detection:</strong> Barcode image ka file name se <strong>EAN</strong> ya <strong>Product Name</strong> auto-fill ho jayega.<br>
       &#8226; Sirf numbers = EAN samjha jayega &#8594; <code>8901234567890.png</code><br>
       &#8226; Text naam = Product name samjha jayega &#8594; <code>Microfiber Cloth Duster.png</code><br>
       &#8226; Both format &#8594; <code>Microfiber Cloth 8901234567890.png</code>
     </div>
-
     <div class="form-grid">
       <div class="fg" style="grid-column:1/-1;">
         <label>Barcode Image Upload</label>
@@ -135,7 +138,6 @@ table.dtbl td input.auto-filled{background:#f0fff4;border-color:#a7f3d0;color:#0
         <input type="number" id="s_pages" value="1" min="1" max="20">
       </div>
     </div>
-
     <div class="btn-row">
       <button class="btn btn-red" onclick="generateSingle()">&#11015; Download PDF</button>
     </div>
@@ -144,20 +146,17 @@ table.dtbl td input.auto-filled{background:#f0fff4;border-color:#a7f3d0;color:#0
 
   <!-- BULK EXCEL TAB -->
   <div class="card" id="tab-bulk" style="display:none;">
-
     <div class="tnote">
       <strong>Excel columns:</strong>
       <code>ProductName</code> | <code>EAN</code> | <code>LabelsPerPage</code> | <code>Pages</code><br>
       <strong>Barcode images:</strong> File ka naam = EAN number (e.g. <code>8901234567890.png</code>) &#8212; system auto-match karega.<br>
       <button class="btn btn-orange" style="font-size:11px;padding:5px 12px;margin-top:8px;" onclick="downloadTemplate()">&#11015; Sample Excel Template</button>
     </div>
-
     <div style="margin-bottom:20px;">
       <div class="step-row"><span class="step-badge">1</span><div>Excel file upload karein (ProductName, EAN, LabelsPerPage, Pages)</div></div>
       <div class="step-row"><span class="step-badge">2</span><div>Barcode images upload karein &#8212; <strong>file names = EAN numbers</strong> (multiple select OK)</div></div>
-      <div class="step-row"><span class="step-badge">3</span><div>Table mein &#10003; confirm karein &#8594; PDF Download</div></div>
+      <div class="step-row"><span class="step-badge">3</span><div>Table mein &#10003; confirm karein &#8594; <strong>Alag ZIP</strong> ya <strong>Ek PDF</strong> download karein</div></div>
     </div>
-
     <span class="sec-title">Step 1 &#8212; Excel Upload</span>
     <div class="drop-zone" id="dropZone"
          onclick="document.getElementById('excelFile').click()"
@@ -167,7 +166,6 @@ table.dtbl td input.auto-filled{background:#f0fff4;border-color:#a7f3d0;color:#0
       <small>.xlsx &middot; .xls &middot; .csv supported</small>
     </div>
     <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="readExcel(this.files[0])">
-
     <div style="margin-top:20px;">
       <span class="sec-title">Step 2 &#8212; Barcode Images Upload</span>
       <div class="img-drop-zone" onclick="document.getElementById('bcImages').click()" style="padding:22px;text-align:center;">
@@ -177,7 +175,6 @@ table.dtbl td input.auto-filled{background:#f0fff4;border-color:#a7f3d0;color:#0
       </div>
       <input type="file" id="bcImages" accept="image/*" multiple style="display:none" onchange="loadBarcodeImages(this,'bulk')">
     </div>
-
     <div id="bulkExcelTableWrap" style="display:none;margin-top:20px;">
       <div class="ph">
         <span class="sec-title" style="margin-bottom:0;">Products</span>
@@ -192,23 +189,25 @@ table.dtbl td input.auto-filled{background:#f0fff4;border-color:#a7f3d0;color:#0
         </table>
       </div>
     </div>
-
     <div class="btn-row" id="bulkExcelBtnRow" style="display:none;">
-      <button class="btn btn-red" onclick="generateBulkExcel()">&#11015; Download PDF (All Products)</button>
+      <button class="btn btn-purple" onclick="generateBulkExcelZIP()">&#128230; Download ZIP (Alag Alag PDF)</button>
+      <button class="btn btn-red" onclick="generateBulkExcel()">&#11015; Download Single PDF (Sab Ek Mein)</button>
+    </div>
+    <div class="progress-wrap" id="progress-bulk">
+      <div class="progress-bar" id="progress-bar-bulk"></div>
+      <div class="progress-label" id="progress-label-bulk"></div>
     </div>
     <div id="st-bulk" class="status-bar"></div>
   </div>
 
   <!-- MANUAL BULK TAB -->
   <div class="card" id="tab-manual" style="display:none;">
-
     <div class="fname-hint">
       <strong>&#129412; Smart Auto-Fill:</strong> Barcode image upload karo &#8212; file name se <strong>Name</strong> aur <strong>EAN</strong> auto-fill ho jayenge!<br>
       &#8226; <code>8901234567890.png</code> &#8594; EAN: 8901234567890<br>
       &#8226; <code>Microfiber Cloth Duster.png</code> &#8594; Name: Microfiber Cloth Duster<br>
       &#8226; <code>Microfiber Cloth 8901234567890.png</code> &#8594; Name + EAN dono fill honge
     </div>
-
     <div style="margin-bottom:20px;">
       <span class="sec-title">Quick Upload &#8212; Sabhi Images Ek Saath</span>
       <div class="smart-drop-zone" id="smartDropZone"
@@ -221,7 +220,6 @@ table.dtbl td input.auto-filled{background:#f0fff4;border-color:#a7f3d0;color:#0
       </div>
       <input type="file" id="smartBcImages" accept="image/*" multiple style="display:none" onchange="smartBulkUpload(this)">
     </div>
-
     <div class="ph">
       <span class="sec-title" style="margin-bottom:0;">Manual Entry Table</span>
       <div style="display:flex;gap:8px;">
@@ -229,23 +227,15 @@ table.dtbl td input.auto-filled{background:#f0fff4;border-color:#a7f3d0;color:#0
         <button class="btn btn-gray" style="font-size:12px;padding:7px 16px;" onclick="clearAll()">&#128465; Clear All</button>
       </div>
     </div>
-
     <p style="font-size:12px;color:#888;margin-bottom:14px;">
       Har product ke liye name, EAN fill karo ya <strong>image upload karo</strong> &#8212; file name se auto-fill hoga.
     </p>
-
     <div id="manualTableWrap" style="display:none;">
       <div class="table-wrap">
         <table class="dtbl">
           <thead>
             <tr>
-              <th>#</th>
-              <th>Product Name</th>
-              <th>EAN</th>
-              <th>Labels/Page</th>
-              <th>Pages</th>
-              <th>Barcode Image</th>
-              <th></th>
+              <th>#</th><th>Product Name</th><th>EAN</th><th>Labels/Page</th><th>Pages</th><th>Barcode Image</th><th></th>
             </tr>
           </thead>
           <tbody id="manualTbody"></tbody>
@@ -253,17 +243,615 @@ table.dtbl td input.auto-filled{background:#f0fff4;border-color:#a7f3d0;color:#0
       </div>
       <div id="manualRowCount" class="row-count" style="margin-top:6px;"></div>
     </div>
-
     <div class="btn-row" id="manualBtnRow" style="display:none;">
-      <button class="btn btn-red" onclick="generateManual()">&#11015; Download PDF</button>
+      <button class="btn btn-purple" onclick="generateManualZIP()">&#128230; Download ZIP (Alag Alag PDF)</button>
+      <button class="btn btn-red" onclick="generateManual()">&#11015; Download Single PDF (Sab Ek Mein)</button>
+    </div>
+    <div class="progress-wrap" id="progress-manual">
+      <div class="progress-bar" id="progress-bar-manual"></div>
+      <div class="progress-label" id="progress-label-manual"></div>
     </div>
     <div id="st-manual" class="status-bar"></div>
   </div>
 
 </div>
 
+<script>
+// ============================================================
+// STATE
+// ============================================================
+var _singleURL = null;
+var _bulkExcelData = [];
+var _manualData = [];
+var _eanMap = {};
 
-<script>(new Function(atob(["CihmdW5jdGlvbigpewogIC8vID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09","PT09PT09PT09PT09PT09PT09PQogIC8vIE1BWElNVU0gUFJPVEVDVElPTiAtIEFMTCBTSE9SVENVVFMg","QkxPQ0tFRAogIC8vID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09","PT09PT09PT09PT09PQogIHZhciBkID0gZG9jdW1lbnQ7CgogIC8vIEJsb2NrIHJpZ2h0LWNsaWNrIGNv","bnRleHQgbWVudQogIGQuYWRkRXZlbnRMaXN0ZW5lcignY29udGV4dG1lbnUnLCBmdW5jdGlvbihlKXsg","ZS5wcmV2ZW50RGVmYXVsdCgpOyBlLnN0b3BQcm9wYWdhdGlvbigpOyByZXR1cm4gZmFsc2U7IH0sIHRy","dWUpOwoKICAvLyBCbG9jayB0ZXh0IHNlbGVjdGlvbiAoZXhjZXB0IGluIGlucHV0cykKICBkLmFkZEV2","ZW50TGlzdGVuZXIoJ3NlbGVjdHN0YXJ0JywgZnVuY3Rpb24oZSl7CiAgICBpZighWydJTlBVVCcsJ1NF","TEVDVCcsJ1RFWFRBUkVBJ10uaW5jbHVkZXMoZS50YXJnZXQudGFnTmFtZSkpewogICAgICBlLnByZXZl","bnREZWZhdWx0KCk7IHJldHVybiBmYWxzZTsKICAgIH0KICB9KTsKCiAgLy8gQmxvY2sgZHJhZwogIGQu","YWRkRXZlbnRMaXN0ZW5lcignZHJhZ3N0YXJ0JywgZnVuY3Rpb24oZSl7IGUucHJldmVudERlZmF1bHQo","KTsgfSk7CgogIC8vIEJsb2NrIGFsbCBrZXlib2FyZCBzaG9ydGN1dHMKICBkLmFkZEV2ZW50TGlzdGVu","ZXIoJ2tleWRvd24nLCBmdW5jdGlvbihlKXsKICAgIHZhciBrID0gKGUua2V5IHx8ICcnKS50b0xvd2Vy","Q2FzZSgpOwogICAgdmFyIGN0cmwgPSBlLmN0cmxLZXkgfHwgZS5tZXRhS2V5OwogICAgdmFyIHNoaWZ0","ID0gZS5zaGlmdEtleTsKICAgIHZhciBhbHQgPSBlLmFsdEtleTsKCiAgICAvLyBGIGtleXMKICAgIGlm","KGsgPT09ICdmMTInIHx8IGsgPT09ICdmMTEnIHx8IGsgPT09ICdmMTAnIHx8IGsgPT09ICdmNScpIHsg","ZS5wcmV2ZW50RGVmYXVsdCgpOyBlLnN0b3BQcm9wYWdhdGlvbigpOyByZXR1cm4gZmFsc2U7IH0KCiAg","ICAvLyBDdHJsIGNvbWJvcwogICAgaWYoY3RybCl7CiAgICAgIC8vIFZpZXcgc291cmNlLCBzYXZlLCBw","cmludCwgZmluZCwgcmVsb2FkLCBuZXcgdGFiLCBldGMuCiAgICAgIGlmKFsndScsJ3MnLCdwJywnYScs","J2MnLCd4JywndicsJ2cnLCdoJywnaicsJ2snLCdsJywnbicsJ3InLCd0JywndycsJ2YnLCdlJywnZCdd","LmluY2x1ZGVzKGspKXsKICAgICAgICBlLnByZXZlbnREZWZhdWx0KCk7IGUuc3RvcFByb3BhZ2F0aW9u","KCk7IHJldHVybiBmYWxzZTsKICAgICAgfQogICAgICAvLyBDdHJsK1NoaWZ0IGNvbWJvcyAoRGV2VG9v","bHMpCiAgICAgIGlmKHNoaWZ0ICYmIFsnaScsJ2onLCdjJywnaycsJ20nLCdwJywnZScsJ24nLCdvJ10u","aW5jbHVkZXMoaykpewogICAgICAgIGUucHJldmVudERlZmF1bHQoKTsgZS5zdG9wUHJvcGFnYXRpb24o","KTsgcmV0dXJuIGZhbHNlOwogICAgICB9CiAgICB9CgogICAgLy8gQWx0K0Y0IGJsb2NrCiAgICBpZihh","bHQgJiYgayA9PT0gJ2Y0Jyl7IGUucHJldmVudERlZmF1bHQoKTsgcmV0dXJuIGZhbHNlOyB9CgogIH0s","IHRydWUpOwoKICAvLyBEaXNhYmxlIHByaW50IHZpYSBrZXlib2FyZCBhbHJlYWR5IGJsb2NrZWQsIGJ1","dCBhbHNvIHZpYSBiZWZvcmVwcmludAogIHdpbmRvdy5hZGRFdmVudExpc3RlbmVyKCdiZWZvcmVwcmlu","dCcsIGZ1bmN0aW9uKGUpeyBlLnByZXZlbnREZWZhdWx0KCk7IGRvY3VtZW50LmJvZHkuaW5uZXJIVE1M","ID0gJyc7IH0pOwoKICAvLyBEZXZUb29scyBkZXRlY3Rpb24gLSBPTkxZIHZpYSBkZWJ1Z2dlciB0cmlj","aywgTk9UIHdpbmRvdyBzaXplCiAgLy8gKHdpbmRvdyBzaXplIGNoZWNrIGNhdXNlcyBmYWxzZSBwb3Np","dGl2ZXMgd2l0aCBleHRlbnNpb25zL3NpZGViYXJzKQogIHZhciBfZHRDaGVjayA9IGZ1bmN0aW9uKCl7","CiAgICB2YXIgcyA9IG5ldyBEYXRlKCk7CiAgICBkZWJ1Z2dlcjsKICAgIGlmKG5ldyBEYXRlKCkgLSBz","ID4gMTAwKXsKICAgICAgZG9jdW1lbnQuYm9keS5pbm5lckhUTUwgPSAnPGRpdiBzdHlsZT0iZGlzcGxh","eTpmbGV4O2FsaWduLWl0ZW1zOmNlbnRlcjtqdXN0aWZ5LWNvbnRlbnQ6Y2VudGVyO2hlaWdodDoxMDB2","aDtmb250LWZhbWlseTpzYW5zLXNlcmlmO2ZvbnQtc2l6ZToyMHB4O2NvbG9yOiNlOTQ1NjA7YmFja2dy","b3VuZDojMWExYTJlOyI+JiMxMjgyNzQ7IEFjY2VzcyBEZW5pZWQ8L2Rpdj4nOwogICAgfQogIH07CiAg","c2V0SW50ZXJ2YWwoX2R0Q2hlY2ssIDE1MDApOwoKfSkoKTsKCi8vID09PT09PT09PT09PT09PT09PT09","PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQovLyBTVEFURQovLyA9PT09PT09","PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KdmFyIF9z","aW5nbGVVUkwgPSBudWxsOwp2YXIgX2J1bGtFeGNlbERhdGEgPSBbXTsKdmFyIF9tYW51YWxEYXRhID0g","W107CnZhciBfZWFuTWFwID0ge307Cgp2YXIgX2djID0gewogIDEwOntjb2xzOjIscm93czo1fSwgMTI6","e2NvbHM6Myxyb3dzOjR9LCAxNTp7Y29sczozLHJvd3M6NX0sCiAgMjA6e2NvbHM6NCxyb3dzOjV9LCAy","NDp7Y29sczo0LHJvd3M6Nn0sIDMwOntjb2xzOjUscm93czo2fSwKICA1NDp7Y29sczo2LHJvd3M6OX0K","fTsKCi8vID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09","PT09PT09PQovLyBUQUIgU1dJVENICi8vID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09","PT09PT09PT09PT09PT09PT09PT09PT09PQpmdW5jdGlvbiBzd2l0Y2hUYWIodCl7CiAgWydzaW5nbGUn","LCdidWxrJywnbWFudWFsJ10uZm9yRWFjaChmdW5jdGlvbihpZCl7CiAgICBkb2N1bWVudC5nZXRFbGVt","ZW50QnlJZCgndGFiLScraWQpLnN0eWxlLmRpc3BsYXkgPSBpZD09PXQ/J2Jsb2NrJzonbm9uZSc7CiAg","fSk7CiAgZG9jdW1lbnQucXVlcnlTZWxlY3RvckFsbCgnLnRhYicpLmZvckVhY2goZnVuY3Rpb24oZWws","aSl7CiAgICBlbC5jbGFzc0xpc3QudG9nZ2xlKCdhY3RpdmUnLFsnc2luZ2xlJywnYnVsaycsJ21hbnVh","bCddW2ldPT09dCk7CiAgfSk7Cn0KCi8vID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09","PT09PT09PT09PT09PT09PT09PT09PT09PQovLyBQQVJTRSBGSUxFTkFNRSA9PiB7bmFtZSwgZWFufQov","LyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09","PT0KZnVuY3Rpb24gcGFyc2VGaWxlbmFtZShmaWxlbmFtZSl7CiAgdmFyIGJhc2UgPSBmaWxlbmFtZS5y","ZXBsYWNlKC9cLlteLl0rJC8sICcnKS50cmltKCk7CiAgdmFyIGVhbk1hdGNoID0gYmFzZS5tYXRjaCgv","XGIoXGR7OCx9KVxiLyk7CiAgdmFyIGVhbiA9IGVhbk1hdGNoID8gZWFuTWF0Y2hbMV0gOiAnJzsKICB2","YXIgbmFtZSA9IGJhc2U7CiAgaWYoZWFuKXsKICAgIG5hbWUgPSBiYXNlLnJlcGxhY2UoZWFuLCcnKS5y","ZXBsYWNlKC9bLV9cc10rJC8sJycpLnJlcGxhY2UoL15bLV9cc10rLywnJykudHJpbSgpOwogIH0KICBp","ZigvXlxkKyQvLnRlc3QoYmFzZSkpewogICAgcmV0dXJuIHtlYW46IGJhc2UsIG5hbWU6ICcnfTsKICB9","CiAgaWYoIWVhbil7CiAgICByZXR1cm4ge2VhbjogJycsIG5hbWU6IGJhc2V9OwogIH0KICByZXR1cm4g","e2VhbjogZWFuLCBuYW1lOiBuYW1lfTsKfQoKLy8gPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09","PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09Ci8vIFNJTkdMRSBUQUIKLy8gPT09PT09PT09PT09","PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CmZ1bmN0aW9uIHBy","ZXZpZXdTaW5nbGUoaW5wKXsKICBpZighaW5wLmZpbGVzfHwhaW5wLmZpbGVzWzBdKXJldHVybjsKICB2","YXIgZmlsZSA9IGlucC5maWxlc1swXTsKICB2YXIgcGFyc2VkID0gcGFyc2VGaWxlbmFtZShmaWxlLm5h","bWUpOwogIHZhciByID0gbmV3IEZpbGVSZWFkZXIoKTsKICByLm9ubG9hZCA9IGZ1bmN0aW9uKGUpewog","ICAgX3NpbmdsZVVSTCA9IGUudGFyZ2V0LnJlc3VsdDsKICAgIGRvY3VtZW50LmdldEVsZW1lbnRCeUlk","KCdzaW5nbGVQcmV2aWV3JykuaW5uZXJIVE1MID0gJzxpbWcgc3JjPSInK19zaW5nbGVVUkwrJyI+JzsK","ICAgIHZhciBuZiA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdzX25hbWUnKTsKICAgIHZhciBlZiA9","IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdzX2VhbicpOwogICAgaWYoIW5mLnZhbHVlICYmIHBhcnNl","ZC5uYW1lKXsgbmYudmFsdWUgPSBwYXJzZWQubmFtZTsgbmYuc3R5bGUuYmFja2dyb3VuZD0nI2YwZmZm","NCc7IG5mLnN0eWxlLmJvcmRlckNvbG9yPScjYTdmM2QwJzsgfQogICAgaWYoIWVmLnZhbHVlICYmIHBh","cnNlZC5lYW4peyAgZWYudmFsdWUgPSBwYXJzZWQuZWFuOyAgZWYuc3R5bGUuYmFja2dyb3VuZD0nI2Yw","ZmZmNCc7IGVmLnN0eWxlLmJvcmRlckNvbG9yPScjYTdmM2QwJzsgfQogIH07CiAgci5yZWFkQXNEYXRh","VVJMKGZpbGUpOwp9CgpmdW5jdGlvbiBnZW5lcmF0ZVNpbmdsZSgpewogIGlmKCFfc2luZ2xlVVJMKXtz","aG93U3QoJ3N0LXNpbmdsZScsJyYjOTg4ODsgUGVobGUgYmFyY29kZSBpbWFnZSB1cGxvYWQga2FyZWlu","LicsMSk7cmV0dXJuO30KICB2YXIgbmFtZSA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdzX25hbWUn","KS52YWx1ZS50cmltKCk7CiAgdmFyIGVhbiAgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnc19lYW4n","KS52YWx1ZS50cmltKCk7CiAgaWYoIW5hbWUmJiFlYW4pe3Nob3dTdCgnc3Qtc2luZ2xlJywnJiM5ODg4","OyBQcm9kdWN0IG5hbWUgeWEgRUFOIGVudGVyIGthcmVpbi4nLDEpO3JldHVybjt9CiAgdmFyIGNvcGll","cyA9IHBhcnNlSW50KGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdzX2NvcGllcycpLnZhbHVlKXx8NTQ7","CiAgdmFyIHBhZ2VzICA9IHBhcnNlSW50KGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdzX3BhZ2VzJyku","dmFsdWUpfHwxOwogIHZhciBmbmFtZSAgPSAnVU5JR0VOXycrX3NuKG5hbWV8fGVhbik7CiAgc2hvd1N0","KCdzdC1zaW5nbGUnLCcmIzkyMDM7IFBERiBiYW4gcmFoYSBoYWkmIzgyMzA7JywwKTsKICBzZXRUaW1l","b3V0KGZ1bmN0aW9uKCl7CiAgICBfYnVpbGRQREYoW3tuYW1lOm5hbWUsZWFuOmVhbixxdHk6Y29waWVz","LHBhZ2VzOnBhZ2VzLGRhdGFVUkw6X3NpbmdsZVVSTH1dLCBmbmFtZSwgZnVuY3Rpb24ob2ssbXNnKXsK","ICAgICAgc2hvd1N0KCdzdC1zaW5nbGUnLChvaz8nJiMxMDAwMzsgJzonJiMxMDAwNzsgJykrbXNnLCAh","b2spOwogICAgfSk7CiAgfSw4MCk7Cn0KCi8vID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09","PT09PT09PT09PT09PT09PT09PT09PT09PT09PQovLyBCVUxLIEVYQ0VMIFRBQgovLyA9PT09PT09PT09","PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KZnVuY3Rpb24g","ZG9EcmFnT3ZlcihlLGlkKXtlLnByZXZlbnREZWZhdWx0KCk7ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQo","aWQpLmNsYXNzTGlzdC5hZGQoJ2RyYWdvdmVyJyk7fQpmdW5jdGlvbiBkb0RyYWdMZWF2ZShpZCl7ZG9j","dW1lbnQuZ2V0RWxlbWVudEJ5SWQoaWQpLmNsYXNzTGlzdC5yZW1vdmUoJ2RyYWdvdmVyJyk7fQpmdW5j","dGlvbiBkb0Ryb3BGaWxlKGUpe2UucHJldmVudERlZmF1bHQoKTtkb0RyYWdMZWF2ZSgnZHJvcFpvbmUn","KTt2YXIgZj1lLmRhdGFUcmFuc2Zlci5maWxlc1swXTtpZihmKXJlYWRFeGNlbChmKTt9CgpmdW5jdGlv","biByZWFkRXhjZWwoZmlsZSl7CiAgaWYoIWZpbGUpcmV0dXJuOwogIHZhciByPW5ldyBGaWxlUmVhZGVy","KCk7CiAgci5vbmxvYWQ9ZnVuY3Rpb24oZSl7CiAgICB2YXIgd2I9WExTWC5yZWFkKGUudGFyZ2V0LnJl","c3VsdCx7dHlwZTonYmluYXJ5J30pOwogICAgdmFyIHdzPXdiLlNoZWV0c1t3Yi5TaGVldE5hbWVzWzBd","XTsKICAgIHZhciByb3dzPVhMU1gudXRpbHMuc2hlZXRfdG9fanNvbih3cyx7aGVhZGVyOjEsZGVmdmFs","OicnfSk7CiAgICBfYnVsa0V4Y2VsRGF0YT1bXTsKICAgIGZvcih2YXIgaT0xO2k8cm93cy5sZW5ndGg7","aSsrKXsKICAgICAgdmFyIHJvdz1yb3dzW2ldOwogICAgICB2YXIgbmFtZT1TdHJpbmcocm93WzBdfHwn","JykudHJpbSgpOwogICAgICB2YXIgZWFuID1TdHJpbmcocm93WzFdfHwnJykudHJpbSgpOwogICAgICB2","YXIgcXR5ID1wYXJzZUludChyb3dbMl0pfHw1NDsKICAgICAgdmFyIHBhZ2VzPXBhcnNlSW50KHJvd1sz","XSl8fDE7CiAgICAgIGlmKCFuYW1lJiYhZWFuKWNvbnRpbnVlOwogICAgICBfYnVsa0V4Y2VsRGF0YS5w","dXNoKHtuYW1lOm5hbWUsZWFuOmVhbixxdHk6cXR5LHBhZ2VzOnBhZ2VzLGRhdGFVUkw6bnVsbCxtYXRj","aGVkOmZhbHNlfSk7CiAgICB9CiAgICByZW5kZXJFeGNlbFRhYmxlKCk7CiAgICBtYXRjaEV4Y2VsSW1h","Z2VzKCk7CiAgICBzaG93U3QoJ3N0LWJ1bGsnLCcmIzEwMDAzOyAnK19idWxrRXhjZWxEYXRhLmxlbmd0","aCsnIHByb2R1Y3RzIGxvYWRlZC4gQWIgYmFyY29kZSBpbWFnZXMgdXBsb2FkIGthcmVpbi4nLDApOwog","IH07CiAgci5yZWFkQXNCaW5hcnlTdHJpbmcoZmlsZSk7Cn0KCmZ1bmN0aW9uIGxvYWRCYXJjb2RlSW1h","Z2VzKGlucCwgdGFiKXsKICBpZighaW5wLmZpbGVzfHwhaW5wLmZpbGVzLmxlbmd0aClyZXR1cm47CiAg","dmFyIGZpbGVzPUFycmF5LmZyb20oaW5wLmZpbGVzKTsKICB2YXIgbG9hZGVkPTA7CiAgZmlsZXMuZm9y","RWFjaChmdW5jdGlvbihmaWxlKXsKICAgIHZhciBiYXNlID0gZmlsZS5uYW1lLnJlcGxhY2UoL1wuW14u","XSskLywnJykudHJpbSgpOwogICAgdmFyIHI9bmV3IEZpbGVSZWFkZXIoKTsKICAgIHIub25sb2FkPWZ1","bmN0aW9uKGUpewogICAgICB2YXIgZGF0YVVSTD1lLnRhcmdldC5yZXN1bHQ7CiAgICAgIF9lYW5NYXBb","YmFzZS50b0xvd2VyQ2FzZSgpXT1kYXRhVVJMOwogICAgICBfZWFuTWFwW2Jhc2VdPWRhdGFVUkw7CiAg","ICAgIHZhciBwYXJzZWQ9cGFyc2VGaWxlbmFtZShmaWxlLm5hbWUpOwogICAgICBpZihwYXJzZWQuZWFu","KXtfZWFuTWFwW3BhcnNlZC5lYW5dPWRhdGFVUkw7X2Vhbk1hcFtwYXJzZWQuZWFuLnRvTG93ZXJDYXNl","KCldPWRhdGFVUkw7fQogICAgICBsb2FkZWQrKzsKICAgICAgaWYobG9hZGVkPT09ZmlsZXMubGVuZ3Ro","KXsKICAgICAgICBtYXRjaEV4Y2VsSW1hZ2VzKCk7CiAgICAgICAgcmVuZGVyRXhjZWxUYWJsZSgpOwog","ICAgICAgIHZhciBtYXRjaGVkPV9idWxrRXhjZWxEYXRhLmZpbHRlcihmdW5jdGlvbihkKXtyZXR1cm4g","ZC5tYXRjaGVkO30pLmxlbmd0aDsKICAgICAgICBzaG93U3QoJ3N0LWJ1bGsnLCcmIzEwMDAzOyAnK2Zp","bGVzLmxlbmd0aCsnIGltYWdlcyBsb2FkZWQuICcrbWF0Y2hlZCsnLycrX2J1bGtFeGNlbERhdGEubGVu","Z3RoKycgcHJvZHVjdHMgbWF0Y2hlZC4nLDApOwogICAgICB9CiAgICB9OwogICAgci5yZWFkQXNEYXRh","VVJMKGZpbGUpOwogIH0pOwp9CgpmdW5jdGlvbiBtYXRjaEV4Y2VsSW1hZ2VzKCl7CiAgX2J1bGtFeGNl","bERhdGEuZm9yRWFjaChmdW5jdGlvbihyb3cpewogICAgaWYocm93Lm1hdGNoZWQpcmV0dXJuOwogICAg","dmFyIGVhbktleT1yb3cuZWFuLnRvTG93ZXJDYXNlKCk7CiAgICB2YXIgbmFtZUtleT1yb3cubmFtZS50","b0xvd2VyQ2FzZSgpOwogICAgaWYoX2Vhbk1hcFtlYW5LZXldKXtyb3cuZGF0YVVSTD1fZWFuTWFwW2Vh","bktleV07cm93Lm1hdGNoZWQ9dHJ1ZTtyZXR1cm47fQogICAgaWYoX2Vhbk1hcFtyb3cuZWFuXSl7cm93","LmRhdGFVUkw9X2Vhbk1hcFtyb3cuZWFuXTtyb3cubWF0Y2hlZD10cnVlO3JldHVybjt9CiAgICBpZihf","ZWFuTWFwW25hbWVLZXldKXtyb3cuZGF0YVVSTD1fZWFuTWFwW25hbWVLZXldO3Jvdy5tYXRjaGVkPXRy","dWU7cmV0dXJuO30KICAgIHZhciBrZXlzPU9iamVjdC5rZXlzKF9lYW5NYXApOwogICAgZm9yKHZhciBr","PTA7azxrZXlzLmxlbmd0aDtrKyspewogICAgICB2YXIga2V5PWtleXNba10udG9Mb3dlckNhc2UoKTsK","ICAgICAgaWYoZWFuS2V5JiYoa2V5LmluZGV4T2YoZWFuS2V5KSE9PS0xfHxlYW5LZXkuaW5kZXhPZihr","ZXkpIT09LTEpKXsKICAgICAgICByb3cuZGF0YVVSTD1fZWFuTWFwW2tleXNba11dO3Jvdy5tYXRjaGVk","PXRydWU7cmV0dXJuOwogICAgICB9CiAgICB9CiAgfSk7Cn0KCmZ1bmN0aW9uIHJlbmRlckV4Y2VsVGFi","bGUoKXsKICB2YXIgdGJvZHk9ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2J1bGtFeGNlbFRib2R5Jyk7","CiAgaWYoIXRib2R5KXJldHVybjsKICB0Ym9keS5pbm5lckhUTUw9Jyc7CiAgX2J1bGtFeGNlbERhdGEu","Zm9yRWFjaChmdW5jdGlvbihyb3csaSl7CiAgICB2YXIgdHI9ZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgn","dHInKTsKICAgIHZhciBiY0NlbGwgPSByb3cubWF0Y2hlZAogICAgICA/ICc8aW1nIHNyYz0iJytyb3cu","ZGF0YVVSTCsnIiBjbGFzcz0iYmMtdGh1bWIiPjxicj48c3BhbiBzdHlsZT0iY29sb3I6IzFlN2UzNDtm","b250LXNpemU6MTBweDtmb250LXdlaWdodDo3MDA7Ij4mIzEwMDAzOyBNYXRjaGVkPC9zcGFuPicKICAg","ICAgOiAnPHNwYW4gc3R5bGU9ImNvbG9yOiNlOTQ1NjA7Zm9udC1zaXplOjExcHg7Zm9udC13ZWlnaHQ6","NzAwOyI+JiMxMDAwNzsgTm90IG1hdGNoZWQ8L3NwYW4+JzsKICAgIHRyLmlubmVySFRNTD0KICAgICAg","Jzx0ZD4nKyhpKzEpKyc8L3RkPicrCiAgICAgICc8dGQ+PGlucHV0IHR5cGU9InRleHQiIHZhbHVlPSIn","K2VzYyhyb3cubmFtZSkrJyIgb25jaGFuZ2U9Il9idWxrRXhjZWxEYXRhWycraSsnXS5uYW1lPXRoaXMu","dmFsdWUiPjwvdGQ+JysKICAgICAgJzx0ZD48aW5wdXQgdHlwZT0idGV4dCIgdmFsdWU9IicrZXNjKHJv","dy5lYW4pKyciIHN0eWxlPSJ3aWR0aDoxMzBweCIgb25jaGFuZ2U9Il9idWxrRXhjZWxEYXRhWycraSsn","XS5lYW49dGhpcy52YWx1ZTttYXRjaEV4Y2VsSW1hZ2VzKCk7cmVuZGVyRXhjZWxUYWJsZSgpOyI+PC90","ZD4nKwogICAgICAnPHRkPjxpbnB1dCB0eXBlPSJudW1iZXIiIHZhbHVlPSInK3Jvdy5xdHkrJyIgbWlu","PSIxIiBtYXg9IjEwMCIgc3R5bGU9IndpZHRoOjYwcHgiIG9uY2hhbmdlPSJfYnVsa0V4Y2VsRGF0YVsn","K2krJ10ucXR5PXBhcnNlSW50KHRoaXMudmFsdWUpfHw1NCI+PC90ZD4nKwogICAgICAnPHRkPjxpbnB1","dCB0eXBlPSJudW1iZXIiIHZhbHVlPSInK3Jvdy5wYWdlcysnIiBtaW49IjEiIG1heD0iMjAiIHN0eWxl","PSJ3aWR0aDo1MHB4IiBvbmNoYW5nZT0iX2J1bGtFeGNlbERhdGFbJytpKyddLnBhZ2VzPXBhcnNlSW50","KHRoaXMudmFsdWUpfHwxIj48L3RkPicrCiAgICAgICc8dGQgc3R5bGU9InRleHQtYWxpZ246Y2VudGVy","Ij4nK2JjQ2VsbCsnPC90ZD4nKwogICAgICAnPHRkPjxidXR0b24gY2xhc3M9ImRlbC1idG4iIG9uY2xp","Y2s9ImRlbGV0ZUV4Y2VsUm93KCcraSsnKSI+JiMxMDAwNTs8L2J1dHRvbj48L3RkPic7CiAgICB0Ym9k","eS5hcHBlbmRDaGlsZCh0cik7CiAgfSk7CiAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2J1bGtFeGNl","bFRhYmxlV3JhcCcpLnN0eWxlLmRpc3BsYXk9X2J1bGtFeGNlbERhdGEubGVuZ3RoPydibG9jayc6J25v","bmUnOwogIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdidWxrRXhjZWxCdG5Sb3cnKS5zdHlsZS5kaXNw","bGF5PV9idWxrRXhjZWxEYXRhLmxlbmd0aD8nZmxleCc6J25vbmUnOwogIGRvY3VtZW50LmdldEVsZW1l","bnRCeUlkKCdidWxrRXhjZWxSb3dDb3VudCcpLnRleHRDb250ZW50PQogICAgX2J1bGtFeGNlbERhdGEu","bGVuZ3RoKycgcHJvZHVjdHMgXHhiNyAnK19idWxrRXhjZWxEYXRhLmZpbHRlcihmdW5jdGlvbihkKXty","ZXR1cm4gZC5tYXRjaGVkO30pLmxlbmd0aCsnIG1hdGNoZWQnOwp9CgpmdW5jdGlvbiBkZWxldGVFeGNl","bFJvdyhpKXtfYnVsa0V4Y2VsRGF0YS5zcGxpY2UoaSwxKTtyZW5kZXJFeGNlbFRhYmxlKCk7fQoKZnVu","Y3Rpb24gZ2VuZXJhdGVCdWxrRXhjZWwoKXsKICBpZighX2J1bGtFeGNlbERhdGEubGVuZ3RoKXtzaG93","U3QoJ3N0LWJ1bGsnLCcmIzk4ODg7IFBlaGxlIGRhdGEgbG9hZCBrYXJlaW4uJywxKTtyZXR1cm47fQog","IHZhciBtaXNzaW5nPV9idWxrRXhjZWxEYXRhLmZpbHRlcihmdW5jdGlvbihyKXtyZXR1cm4gIXIuZGF0","YVVSTDt9KS5tYXAoZnVuY3Rpb24ocil7cmV0dXJuIHIubmFtZXx8ci5lYW47fSk7CiAgaWYobWlzc2lu","Zy5sZW5ndGgpe3Nob3dTdCgnc3QtYnVsaycsJyYjOTg4ODsgQmFyY29kZSBtaXNzaW5nIGZvcjogJytt","aXNzaW5nLmpvaW4oJywgJyksMSk7cmV0dXJuO30KICB2YXIgZm5hbWU9X2J1bGtFeGNlbERhdGEubGVu","Z3RoPT09MT8nVU5JR0VOXycrX3NuKF9idWxrRXhjZWxEYXRhWzBdLm5hbWUpOidVTklHRU5fQnVsa18n","K19idWxrRXhjZWxEYXRhLmxlbmd0aCsnX1Byb2R1Y3RzJzsKICBzaG93U3QoJ3N0LWJ1bGsnLCcmIzky","MDM7IFBERiBiYW4gcmFoYSBoYWkgKCcrX2J1bGtFeGNlbERhdGEubGVuZ3RoKycgcHJvZHVjdHMpJiM4","MjMwOycsMCk7CiAgc2V0VGltZW91dChmdW5jdGlvbigpewogICAgX2J1aWxkUERGKF9idWxrRXhjZWxE","YXRhLGZuYW1lLGZ1bmN0aW9uKG9rLG1zZyl7c2hvd1N0KCdzdC1idWxrJywob2s/JyYjMTAwMDM7ICc6","JyYjMTAwMDc7ICcpK21zZywhb2spO30pOwogIH0sODApOwp9CgovLyA9PT09PT09PT09PT09PT09PT09","PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KLy8gTUFOVUFMIEJVTEsgVEFC","Ci8vID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09","PT09PQpmdW5jdGlvbiBkb0Ryb3BTbWFydChlKXsKICBlLnByZXZlbnREZWZhdWx0KCk7CiAgZG9EcmFn","TGVhdmUoJ3NtYXJ0RHJvcFpvbmUnKTsKICB2YXIgZmlsZXM9QXJyYXkuZnJvbShlLmRhdGFUcmFuc2Zl","ci5maWxlcykuZmlsdGVyKGZ1bmN0aW9uKGYpe3JldHVybiBmLnR5cGUuc3RhcnRzV2l0aCgnaW1hZ2Uv","Jyk7fSk7CiAgaWYoZmlsZXMubGVuZ3RoKXByb2Nlc3NTbWFydEZpbGVzKGZpbGVzKTsKfQoKZnVuY3Rp","b24gc21hcnRCdWxrVXBsb2FkKGlucCl7CiAgaWYoIWlucC5maWxlc3x8IWlucC5maWxlcy5sZW5ndGgp","cmV0dXJuOwogIHByb2Nlc3NTbWFydEZpbGVzKEFycmF5LmZyb20oaW5wLmZpbGVzKSk7Cn0KCmZ1bmN0","aW9uIHByb2Nlc3NTbWFydEZpbGVzKGZpbGVzKXsKICB2YXIgbG9hZGVkPTA7CiAgZmlsZXMuZm9yRWFj","aChmdW5jdGlvbihmaWxlKXsKICAgIHZhciBwYXJzZWQ9cGFyc2VGaWxlbmFtZShmaWxlLm5hbWUpOwog","ICAgdmFyIHI9bmV3IEZpbGVSZWFkZXIoKTsKICAgIHIub25sb2FkPWZ1bmN0aW9uKGUpewogICAgICB2","YXIgZGF0YVVSTD1lLnRhcmdldC5yZXN1bHQ7CiAgICAgIHZhciBleGlzdGluZz1udWxsOwogICAgICBp","ZihwYXJzZWQuZWFuKXsKICAgICAgICBmb3IodmFyIGo9MDtqPF9tYW51YWxEYXRhLmxlbmd0aDtqKysp","ewogICAgICAgICAgaWYoX21hbnVhbERhdGFbal0uZWFuPT09cGFyc2VkLmVhbil7ZXhpc3Rpbmc9X21h","bnVhbERhdGFbal07YnJlYWs7fQogICAgICAgIH0KICAgICAgfQogICAgICBpZihleGlzdGluZyl7CiAg","ICAgICAgZXhpc3RpbmcuZGF0YVVSTD1kYXRhVVJMOwogICAgICAgIGV4aXN0aW5nLm1hdGNoZWQ9dHJ1","ZTsKICAgICAgICBpZihwYXJzZWQubmFtZSYmIWV4aXN0aW5nLm5hbWUpZXhpc3RpbmcubmFtZT1wYXJz","ZWQubmFtZTsKICAgICAgfSBlbHNlIHsKICAgICAgICBfbWFudWFsRGF0YS5wdXNoKHsKICAgICAgICAg","IG5hbWU6IHBhcnNlZC5uYW1lLAogICAgICAgICAgZWFuOiAgcGFyc2VkLmVhbiwKICAgICAgICAgIHF0","eTogIDU0LAogICAgICAgICAgcGFnZXM6MSwKICAgICAgICAgIGRhdGFVUkw6ZGF0YVVSTCwKICAgICAg","ICAgIG1hdGNoZWQ6dHJ1ZQogICAgICAgIH0pOwogICAgICB9CiAgICAgIGxvYWRlZCsrOwogICAgICBp","Zihsb2FkZWQ9PT1maWxlcy5sZW5ndGgpewogICAgICAgIHJlbmRlck1hbnVhbFRhYmxlKCk7CiAgICAg","ICAgc2hvd1N0KCdzdC1tYW51YWwnLCcmIzEwMDAzOyAnK2ZpbGVzLmxlbmd0aCsnIGltYWdlcyBhZGRl","ZC4gRGV0YWlscyBjaGVjayBrYXJlaW4gYXVyIGVkaXQga2FyZWluLicsMCk7CiAgICAgIH0KICAgIH07","CiAgICByLnJlYWRBc0RhdGFVUkwoZmlsZSk7CiAgfSk7Cn0KCmZ1bmN0aW9uIGFkZE1hbnVhbFJvdygp","ewogIF9tYW51YWxEYXRhLnB1c2goe25hbWU6JycsZWFuOicnLHF0eTo1NCxwYWdlczoxLGRhdGFVUkw6","bnVsbCxtYXRjaGVkOmZhbHNlfSk7CiAgcmVuZGVyTWFudWFsVGFibGUoKTsKICBzZXRUaW1lb3V0KGZ1","bmN0aW9uKCl7CiAgICB2YXIgaW5wdXRzPWRvY3VtZW50LnF1ZXJ5U2VsZWN0b3JBbGwoJyNtYW51YWxU","Ym9keSB0cjpsYXN0LWNoaWxkIGlucHV0W3R5cGU9InRleHQiXScpOwogICAgaWYoaW5wdXRzWzBdKWlu","cHV0c1swXS5mb2N1cygpOwogIH0sNTApOwp9CgpmdW5jdGlvbiBkZWxldGVNYW51YWxSb3coaSl7X21h","bnVhbERhdGEuc3BsaWNlKGksMSk7cmVuZGVyTWFudWFsVGFibGUoKTt9CmZ1bmN0aW9uIGNsZWFyQWxs","KCl7aWYoY29uZmlybSgnU2FiIHJvd3MgZGVsZXRlIGthciBkZWluPycpKXtfbWFudWFsRGF0YT1bXTty","ZW5kZXJNYW51YWxUYWJsZSgpO319CgpmdW5jdGlvbiBsb2FkTWFudWFsQmFyY29kZShpLGlucCl7CiAg","aWYoIWlucC5maWxlc3x8IWlucC5maWxlc1swXSlyZXR1cm47CiAgdmFyIGZpbGU9aW5wLmZpbGVzWzBd","OwogIHZhciBwYXJzZWQ9cGFyc2VGaWxlbmFtZShmaWxlLm5hbWUpOwogIHZhciByPW5ldyBGaWxlUmVh","ZGVyKCk7CiAgci5vbmxvYWQ9ZnVuY3Rpb24oZSl7CiAgICBfbWFudWFsRGF0YVtpXS5kYXRhVVJMPWUu","dGFyZ2V0LnJlc3VsdDsKICAgIF9tYW51YWxEYXRhW2ldLm1hdGNoZWQ9dHJ1ZTsKICAgIGlmKCFfbWFu","dWFsRGF0YVtpXS5uYW1lJiZwYXJzZWQubmFtZSkgX21hbnVhbERhdGFbaV0ubmFtZT1wYXJzZWQubmFt","ZTsKICAgIGlmKCFfbWFudWFsRGF0YVtpXS5lYW4mJnBhcnNlZC5lYW4pICAgX21hbnVhbERhdGFbaV0u","ZWFuPXBhcnNlZC5lYW47CiAgICByZW5kZXJNYW51YWxUYWJsZSgpOwogIH07CiAgci5yZWFkQXNEYXRh","VVJMKGZpbGUpOwp9CgpmdW5jdGlvbiByZW5kZXJNYW51YWxUYWJsZSgpewogIHZhciB0Ym9keT1kb2N1","bWVudC5nZXRFbGVtZW50QnlJZCgnbWFudWFsVGJvZHknKTsKICBpZighdGJvZHkpcmV0dXJuOwogIHRi","b2R5LmlubmVySFRNTD0nJzsKICBfbWFudWFsRGF0YS5mb3JFYWNoKGZ1bmN0aW9uKHJvdyxpKXsKICAg","IHZhciB0cj1kb2N1bWVudC5jcmVhdGVFbGVtZW50KCd0cicpOwogICAgdmFyIG5hbWVDbGFzcz1yb3cu","bmFtZSYmcm93Lm1hdGNoZWQ/J2F1dG8tZmlsbGVkJzonJzsKICAgIHZhciBlYW5DbGFzcyA9cm93LmVh","biYmcm93Lm1hdGNoZWQ/J2F1dG8tZmlsbGVkJzonJzsKICAgIHZhciBiY0NlbGw9Jyc7CiAgICBpZihy","b3cubWF0Y2hlZCYmcm93LmRhdGFVUkwpewogICAgICBiY0NlbGw9JzxpbWcgc3JjPSInK3Jvdy5kYXRh","VVJMKyciIGNsYXNzPSJiYy10aHVtYiI+PGJyPicrCiAgICAgICAgICAgICAnPGxhYmVsIGZvcj0ibWJj","XycraSsnIiBjbGFzcz0iYnRuIGJ0bi1ncmF5IiBzdHlsZT0icGFkZGluZzoycHggN3B4O2ZvbnQtc2l6","ZToxMHB4O2N1cnNvcjpwb2ludGVyO21hcmdpbi10b3A6M3B4O2Rpc3BsYXk6aW5saW5lLWJsb2NrOyI+","JiM4NjE5OyBDaGFuZ2U8L2xhYmVsPicrCiAgICAgICAgICAgICAnPGlucHV0IHR5cGU9ImZpbGUiIGlk","PSJtYmNfJytpKyciIGFjY2VwdD0iaW1hZ2UvKiIgc3R5bGU9ImRpc3BsYXk6bm9uZSIgb25jaGFuZ2U9","ImxvYWRNYW51YWxCYXJjb2RlKCcraSsnLHRoaXMpIj4nOwogICAgfSBlbHNlIHsKICAgICAgYmNDZWxs","PSc8bGFiZWwgZm9yPSJtYmNfJytpKyciIGNsYXNzPSJidG4gYnRuLWJsdWUiIHN0eWxlPSJwYWRkaW5n","OjRweCAxMHB4O2ZvbnQtc2l6ZToxMXB4O2N1cnNvcjpwb2ludGVyO2Rpc3BsYXk6aW5saW5lLWJsb2Nr","OyI+JiMxMjgyNDc7IFVwbG9hZDwvbGFiZWw+JysKICAgICAgICAgICAgICc8aW5wdXQgdHlwZT0iZmls","ZSIgaWQ9Im1iY18nK2krJyIgYWNjZXB0PSJpbWFnZS8qIiBzdHlsZT0iZGlzcGxheTpub25lIiBvbmNo","YW5nZT0ibG9hZE1hbnVhbEJhcmNvZGUoJytpKycsdGhpcykiPic7CiAgICB9CiAgICB0ci5pbm5lckhU","TUw9CiAgICAgICc8dGQgc3R5bGU9ImNvbG9yOiM4ODg7Ij4nKyhpKzEpKyc8L3RkPicrCiAgICAgICc8","dGQ+PGlucHV0IHR5cGU9InRleHQiIGNsYXNzPSInK25hbWVDbGFzcysnIiB2YWx1ZT0iJytlc2Mocm93","Lm5hbWUpKyciIHBsYWNlaG9sZGVyPSJQcm9kdWN0IG5hbWUiIG9uY2hhbmdlPSJfbWFudWFsRGF0YVsn","K2krJ10ubmFtZT10aGlzLnZhbHVlO3RoaXMuc3R5bGUuYmFja2dyb3VuZD1cJ1wnIj48L3RkPicrCiAg","ICAgICc8dGQ+PGlucHV0IHR5cGU9InRleHQiIGNsYXNzPSInK2VhbkNsYXNzKyciIHZhbHVlPSInK2Vz","Yyhyb3cuZWFuKSsnIiBwbGFjZWhvbGRlcj0iRUFOIiBzdHlsZT0id2lkdGg6MTMwcHgiIG9uY2hhbmdl","PSJfbWFudWFsRGF0YVsnK2krJ10uZWFuPXRoaXMudmFsdWU7dGhpcy5zdHlsZS5iYWNrZ3JvdW5kPVwn","XCciPjwvdGQ+JysKICAgICAgJzx0ZD48c2VsZWN0IG9uY2hhbmdlPSJfbWFudWFsRGF0YVsnK2krJ10u","cXR5PXBhcnNlSW50KHRoaXMudmFsdWUpIj4nKwogICAgICAgIFsxMCwxMiwxNSwyMCwyNCwzMCw1NF0u","bWFwKGZ1bmN0aW9uKHYpe3JldHVybiAnPG9wdGlvbiB2YWx1ZT0iJyt2KyciJysodj09PXJvdy5xdHk/","JyBzZWxlY3RlZCc6JycpKyc+Jyt2Kyc8L29wdGlvbj4nO30pLmpvaW4oJycpKwogICAgICAnPC9zZWxl","Y3Q+PC90ZD4nKwogICAgICAnPHRkPjxpbnB1dCB0eXBlPSJudW1iZXIiIHZhbHVlPSInK3Jvdy5wYWdl","cysnIiBtaW49IjEiIG1heD0iMjAiIHN0eWxlPSJ3aWR0aDo1MHB4IiBvbmNoYW5nZT0iX21hbnVhbERh","dGFbJytpKyddLnBhZ2VzPXBhcnNlSW50KHRoaXMudmFsdWUpfHwxIj48L3RkPicrCiAgICAgICc8dGQg","c3R5bGU9InRleHQtYWxpZ246Y2VudGVyIj4nK2JjQ2VsbCsnPC90ZD4nKwogICAgICAnPHRkPjxidXR0","b24gY2xhc3M9ImRlbC1idG4iIG9uY2xpY2s9ImRlbGV0ZU1hbnVhbFJvdygnK2krJykiPiYjMTAwMDU7","PC9idXR0b24+PC90ZD4nOwogICAgdGJvZHkuYXBwZW5kQ2hpbGQodHIpOwogIH0pOwogIGRvY3VtZW50","LmdldEVsZW1lbnRCeUlkKCdtYW51YWxUYWJsZVdyYXAnKS5zdHlsZS5kaXNwbGF5PV9tYW51YWxEYXRh","Lmxlbmd0aD8nYmxvY2snOidub25lJzsKICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnbWFudWFsQnRu","Um93Jykuc3R5bGUuZGlzcGxheT1fbWFudWFsRGF0YS5sZW5ndGg/J2ZsZXgnOidub25lJzsKICBkb2N1","bWVudC5nZXRFbGVtZW50QnlJZCgnbWFudWFsUm93Q291bnQnKS50ZXh0Q29udGVudD0KICAgIF9tYW51","YWxEYXRhLmxlbmd0aCsnIHByb2R1Y3RzIFx4YjcgJytfbWFudWFsRGF0YS5maWx0ZXIoZnVuY3Rpb24o","ZCl7cmV0dXJuIGQubWF0Y2hlZDt9KS5sZW5ndGgrJyB3aXRoIGJhcmNvZGUnOwp9CgpmdW5jdGlvbiBn","ZW5lcmF0ZU1hbnVhbCgpewogIGlmKCFfbWFudWFsRGF0YS5sZW5ndGgpe3Nob3dTdCgnc3QtbWFudWFs","JywnJiM5ODg4OyBLb2kgYmhpIHByb2R1Y3QgbmFoaSBoYWkuJywxKTtyZXR1cm47fQogIHZhciBtaXNz","aW5nPV9tYW51YWxEYXRhLmZpbHRlcihmdW5jdGlvbihyKXtyZXR1cm4gIXIuZGF0YVVSTDt9KS5tYXAo","ZnVuY3Rpb24ocixpKXtyZXR1cm4gci5uYW1lfHxyLmVhbnx8KCdSb3cgJysoaSsxKSk7fSk7CiAgaWYo","bWlzc2luZy5sZW5ndGgpe3Nob3dTdCgnc3QtbWFudWFsJywnJiM5ODg4OyBCYXJjb2RlIGltYWdlIG1p","c3NpbmcgZm9yOiAnK21pc3Npbmcuam9pbignLCAnKSwxKTtyZXR1cm47fQogIHZhciBmbmFtZT1fbWFu","dWFsRGF0YS5sZW5ndGg9PT0xPydVTklHRU5fJytfc24oX21hbnVhbERhdGFbMF0ubmFtZXx8X21hbnVh","bERhdGFbMF0uZWFuKTonVU5JR0VOX0J1bGtfJytfbWFudWFsRGF0YS5sZW5ndGgrJ19Qcm9kdWN0cyc7","CiAgc2hvd1N0KCdzdC1tYW51YWwnLCcmIzkyMDM7IFBERiBiYW4gcmFoYSBoYWkgKCcrX21hbnVhbERh","dGEubGVuZ3RoKycgcHJvZHVjdHMpJiM4MjMwOycsMCk7CiAgc2V0VGltZW91dChmdW5jdGlvbigpewog","ICAgX2J1aWxkUERGKF9tYW51YWxEYXRhLGZuYW1lLGZ1bmN0aW9uKG9rLG1zZyl7c2hvd1N0KCdzdC1t","YW51YWwnLChvaz8nJiMxMDAwMzsgJzonJiMxMDAwNzsgJykrbXNnLCFvayk7fSk7CiAgfSw4MCk7Cn0K","Ci8vID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09","PT09PQovLyBQREYgQlVJTERFUgovLyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09","PT09PT09PT09PT09PT09PT09PT09PT0KZnVuY3Rpb24gX2J1aWxkUERGKHByb2R1Y3RzLCBmaWxlbmFt","ZSwgY2IpewogIHZhciBqc1BERj13aW5kb3cuanNwZGYuanNQREY7CiAgdmFyIGRvYz1uZXcganNQREYo","J3AnLCdtbScsJ2E0Jyk7CiAgdmFyIHBhZ2VXPTIxMCxwYWdlSD0yOTc7CiAgdmFyIF9maXJzdFBhZ2U9","dHJ1ZTsKICB2YXIgaWR4PTA7CiAgZnVuY3Rpb24gbmV4dCgpewogICAgaWYoaWR4Pj1wcm9kdWN0cy5s","ZW5ndGgpe2RvYy5zYXZlKGZpbGVuYW1lKycucGRmJyk7Y2IodHJ1ZSwnUERGIGRvd25sb2FkIHNodXJ1","OiAnK2ZpbGVuYW1lKycucGRmJyk7cmV0dXJuO30KICAgIHZhciBwcm9kPXByb2R1Y3RzW2lkeCsrXTsK","ICAgIHZhciBxdHk9cGFyc2VJbnQocHJvZC5xdHkpfHw1NDsKICAgIHZhciBjZmc9X2djW3F0eV18fF9n","Y1s1NF07CiAgICB2YXIgY2VsbFc9cGFnZVcvY2ZnLmNvbHM7CiAgICB2YXIgaGVhZGVySD05OwogICAg","dmFyIHVzYWJsZUg9cGFnZUgtaGVhZGVySDsKICAgIHZhciBjZWxsSD11c2FibGVIL2NmZy5yb3dzOwog","ICAgdmFyIGltZz1uZXcgSW1hZ2UoKTsKICAgIGltZy5vbmxvYWQ9ZnVuY3Rpb24oKXsKICAgICAgdmFy","IGFyPWltZy53aWR0aC9pbWcuaGVpZ2h0OwogICAgICB2YXIgbWF4Vz1jZWxsVyowLjgyLCBtYXhIPWNl","bGxIKjAuNjg7CiAgICAgIHZhciBiVyxiSDsKICAgICAgaWYobWF4Vy9hcjw9bWF4SCl7Ylc9bWF4Vzti","SD1tYXhXL2FyO30KICAgICAgZWxzZXtiSD1tYXhIO2JXPW1heEgqYXI7fQogICAgICBmb3IodmFyIHA9","MDtwPChwcm9kLnBhZ2VzfHwxKTtwKyspewogICAgICAgIGlmKCFfZmlyc3RQYWdlKWRvYy5hZGRQYWdl","KCk7X2ZpcnN0UGFnZT1mYWxzZTsKICAgICAgICAvLyBIZWFkZXIKICAgICAgICBkb2Muc2V0RmlsbENv","bG9yKDE1LDUyLDk2KTsKICAgICAgICBkb2MucmVjdCgwLDAscGFnZVcsaGVhZGVySCwnRicpOwogICAg","ICAgIGRvYy5zZXRGb250U2l6ZSg5KTtkb2Muc2V0Rm9udCgnaGVsdmV0aWNhJywnYm9sZCcpOwogICAg","ICAgIGRvYy5zZXRUZXh0Q29sb3IoMjU1LDI1NSwyNTUpOwogICAgICAgIGRvYy50ZXh0KChwcm9kLm5h","bWV8fHByb2QuZWFufHwnJykudG9VcHBlckNhc2UoKS5zdWJzdHJpbmcoMCw2MCksNCw2KTsKICAgICAg","ICBpZihwcm9kLmVhbil7CiAgICAgICAgICBkb2Muc2V0Rm9udFNpemUoNy41KTtkb2Muc2V0VGV4dENv","bG9yKDE4MCwyMTAsMjU1KTsKICAgICAgICAgIGRvYy50ZXh0KCdFQU46ICcrcHJvZC5lYW4scGFnZVcv","Miw2LHthbGlnbjonY2VudGVyJ30pOwogICAgICAgIH0KICAgICAgICBkb2Muc2V0Rm9udFNpemUoNyk7","ZG9jLnNldFRleHRDb2xvcigxODAsMjAwLDI1NSk7CiAgICAgICAgZG9jLnRleHQoJ1VOSUdFTiB8IFBh","Z2UgJysocCsxKSsnIG9mICcrKHByb2QucGFnZXN8fDEpLHBhZ2VXLTMsNix7YWxpZ246J3JpZ2h0J30p","OwogICAgICAgIGRvYy5zZXRUZXh0Q29sb3IoMCwwLDApOwogICAgICAgIC8vIExhYmVscyBncmlkCiAg","ICAgICAgZm9yKHZhciByb3c9MDtyb3c8Y2ZnLnJvd3M7cm93KyspewogICAgICAgICAgZm9yKHZhciBj","b2w9MDtjb2w8Y2ZnLmNvbHM7Y29sKyspewogICAgICAgICAgICB2YXIgeD1jb2wqY2VsbFc7CiAgICAg","ICAgICAgIHZhciB5PWhlYWRlckgrcm93KmNlbGxIOwogICAgICAgICAgICB2YXIgaXg9eCsoY2VsbFct","YlcpLzI7CiAgICAgICAgICAgIHZhciBpeT15KyhjZWxsSC1iSC03KS8yOwogICAgICAgICAgICBkb2Mu","YWRkSW1hZ2UocHJvZC5kYXRhVVJMLCdQTkcnLGl4LGl5LGJXLGJIKTsKICAgICAgICAgICAgZG9jLnNl","dEZvbnRTaXplKDYpO2RvYy5zZXRGb250KCdoZWx2ZXRpY2EnLCdib2xkJyk7CiAgICAgICAgICAgIGRv","Yy50ZXh0KHByb2QubmFtZXx8JycseCtjZWxsVy8yLGl5K2JIKzMse2FsaWduOidjZW50ZXInLG1heFdp","ZHRoOmNlbGxXLTJ9KTsKICAgICAgICAgICAgaWYocHJvZC5lYW4pewogICAgICAgICAgICAgIGRvYy5z","ZXRGb250U2l6ZSg1LjUpO2RvYy5zZXRGb250KCdoZWx2ZXRpY2EnLCdub3JtYWwnKTsKICAgICAgICAg","ICAgICBkb2MudGV4dChwcm9kLmVhbix4K2NlbGxXLzIsaXkrYkgrNi41LHthbGlnbjonY2VudGVyJ30p","OwogICAgICAgICAgICB9CiAgICAgICAgICAgIGRvYy5zZXREcmF3Q29sb3IoMTkwLDE5MCwxOTApOwog","ICAgICAgICAgICBkb2Muc2V0TGluZURhc2hQYXR0ZXJuKFsxLDFdLDApOwogICAgICAgICAgICBkb2Mu","cmVjdCh4LHksY2VsbFcsY2VsbEgpOwogICAgICAgICAgfQogICAgICAgIH0KICAgICAgfQogICAgICBu","ZXh0KCk7CiAgICB9OwogICAgaW1nLm9uZXJyb3I9ZnVuY3Rpb24oKXtjYihmYWxzZSwnSW1hZ2UgZXJy","b3I6ICcrKHByb2QubmFtZXx8cHJvZC5lYW4pKTt9OwogICAgaW1nLnNyYz1wcm9kLmRhdGFVUkw7CiAg","fQogIG5leHQoKTsKfQoKLy8gPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09","PT09PT09PT09PT09PT09PT09Ci8vIFRFTVBMQVRFIERPV05MT0FECi8vID09PT09PT09PT09PT09PT09","PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQpmdW5jdGlvbiBkb3dubG9h","ZFRlbXBsYXRlKCl7CiAgdmFyIHdzX2RhdGE9WwogICAgWydQcm9kdWN0TmFtZScsJ0VBTicsJ0xhYmVs","c1BlclBhZ2UnLCdQYWdlcyddLAogICAgWydNaWNyb2ZpYmVyIENsb3RoIER1c3RlciA0MHg0MCcsJzg5","MDEyMzQ1Njc4OTAnLDU0LDFdLAogICAgWydDYXIgV2FzaCBTcG9uZ2UgUGFkJywnODkwMTIzNDU2Nzg5","MScsMzAsMl0sCiAgICBbJ0dsYXNzIENsZWFuZXIgU3ByYXkgNTAwbWwnLCc4OTAxMjM0NTY3ODkyJywy","MCwxXQogIF07CiAgdmFyIHdiPVhMU1gudXRpbHMuYm9va19uZXcoKTsKICB2YXIgd3M9WExTWC51dGls","cy5hb2FfdG9fc2hlZXQod3NfZGF0YSk7CiAgd3NbJyFjb2xzJ109W3t3Y2g6Mzh9LHt3Y2g6MTZ9LHt3","Y2g6MTR9LHt3Y2g6N31dOwogIFhMU1gudXRpbHMuYm9va19hcHBlbmRfc2hlZXQod2Isd3MsJ0JhcmNv","ZGVzJyk7CiAgWExTWC53cml0ZUZpbGUod2IsJ1VOSUdFTl9CYXJjb2RlX1RlbXBsYXRlLnhsc3gnKTsK","fQoKLy8gPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09","PT09PT09Ci8vIEhFTFBFUlMKLy8gPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09","PT09PT09PT09PT09PT09PT09PT09CmZ1bmN0aW9uIF9zbihzKXtyZXR1cm4gU3RyaW5nKHN8fCcnKS5y","ZXBsYWNlKC9bXmEtekEtWjAtOSBcLV0vZywnJykudHJpbSgpLnJlcGxhY2UoL1xzKy9nLCdfJykuc3Vi","c3RyaW5nKDAsNTApfHwnTGFiZWwnO30KZnVuY3Rpb24gZXNjKHMpe3JldHVybiBTdHJpbmcoc3x8Jycp","LnJlcGxhY2UoLyYvZywnJmFtcDsnKS5yZXBsYWNlKC8iL2csJyZxdW90OycpLnJlcGxhY2UoLzwvZywn","Jmx0OycpLnJlcGxhY2UoLz4vZywnJmd0OycpO30KZnVuY3Rpb24gc2hvd1N0KGlkLG1zZyxpc0Vycil7","CiAgdmFyIGVsPWRvY3VtZW50LmdldEVsZW1lbnRCeUlkKGlkKTtpZighZWwpcmV0dXJuOwogIGVsLmlu","bmVySFRNTD1tc2c7CiAgZWwuY2xhc3NOYW1lPSdzdGF0dXMtYmFyJysoaXNFcnI/JyBlcnJvcic6Jycp","OwogIGVsLnN0eWxlLmRpc3BsYXk9bXNnPydibG9jayc6J25vbmUnOwp9CgovLyBFeHBvc2UgZ2xvYmFs","cwp3aW5kb3cuc3dpdGNoVGFiPXN3aXRjaFRhYjsKd2luZG93LnByZXZpZXdTaW5nbGU9cHJldmlld1Np","bmdsZTsKd2luZG93LmdlbmVyYXRlU2luZ2xlPWdlbmVyYXRlU2luZ2xlOwp3aW5kb3cuZG9EcmFnT3Zl","cj1kb0RyYWdPdmVyOwp3aW5kb3cuZG9EcmFnTGVhdmU9ZG9EcmFnTGVhdmU7CndpbmRvdy5kb0Ryb3BG","aWxlPWRvRHJvcEZpbGU7CndpbmRvdy5kb0Ryb3BTbWFydD1kb0Ryb3BTbWFydDsKd2luZG93LnJlYWRF","eGNlbD1yZWFkRXhjZWw7CndpbmRvdy5sb2FkQmFyY29kZUltYWdlcz1sb2FkQmFyY29kZUltYWdlczsK","d2luZG93Lm1hdGNoRXhjZWxJbWFnZXM9bWF0Y2hFeGNlbEltYWdlczsKd2luZG93LnJlbmRlckV4Y2Vs","VGFibGU9cmVuZGVyRXhjZWxUYWJsZTsKd2luZG93LmRlbGV0ZUV4Y2VsUm93PWRlbGV0ZUV4Y2VsUm93","Owp3aW5kb3cuZ2VuZXJhdGVCdWxrRXhjZWw9Z2VuZXJhdGVCdWxrRXhjZWw7CndpbmRvdy5zbWFydEJ1","bGtVcGxvYWQ9c21hcnRCdWxrVXBsb2FkOwp3aW5kb3cuYWRkTWFudWFsUm93PWFkZE1hbnVhbFJvdzsK","d2luZG93LmRlbGV0ZU1hbnVhbFJvdz1kZWxldGVNYW51YWxSb3c7CndpbmRvdy5jbGVhckFsbD1jbGVh","ckFsbDsKd2luZG93LmxvYWRNYW51YWxCYXJjb2RlPWxvYWRNYW51YWxCYXJjb2RlOwp3aW5kb3cucmVu","ZGVyTWFudWFsVGFibGU9cmVuZGVyTWFudWFsVGFibGU7CndpbmRvdy5nZW5lcmF0ZU1hbnVhbD1nZW5l","cmF0ZU1hbnVhbDsKd2luZG93LmRvd25sb2FkVGVtcGxhdGU9ZG93bmxvYWRUZW1wbGF0ZTsKd2luZG93","Ll9idWxrRXhjZWxEYXRhPV9idWxrRXhjZWxEYXRhOwp3aW5kb3cuX21hbnVhbERhdGE9X21hbnVhbERh","dGE7Cg=="].join(""))))();</script>
+var _gc = {
+  10:{cols:2,rows:5}, 12:{cols:3,rows:4}, 15:{cols:3,rows:5},
+  20:{cols:4,rows:5}, 24:{cols:4,rows:6}, 30:{cols:5,rows:6},
+  54:{cols:6,rows:9}
+};
+
+// ============================================================
+// TAB SWITCH
+// ============================================================
+function switchTab(t){
+  ['single','bulk','manual'].forEach(function(id){
+    document.getElementById('tab-'+id).style.display = id===t?'block':'none';
+  });
+  document.querySelectorAll('.tab').forEach(function(el,i){
+    el.classList.toggle('active',['single','bulk','manual'][i]===t);
+  });
+}
+
+// ============================================================
+// PARSE FILENAME => {name, ean}
+// ============================================================
+function parseFilename(filename){
+  var base = filename.replace(/\.[^.]+$/, '').trim();
+  var eanMatch = base.match(/\b(\d{8,})\b/);
+  var ean = eanMatch ? eanMatch[1] : '';
+  var name = base;
+  if(ean){
+    name = base.replace(ean,'').replace(/[-_\s]+$/,'').replace(/^[-_\s]+/,'').trim();
+  }
+  if(/^\d+$/.test(base)){
+    return {ean: base, name: ''};
+  }
+  if(!ean){
+    return {ean: '', name: base};
+  }
+  return {ean: ean, name: name};
+}
+
+// ============================================================
+// SINGLE TAB
+// ============================================================
+function previewSingle(inp){
+  if(!inp.files||!inp.files[0])return;
+  var file = inp.files[0];
+  var parsed = parseFilename(file.name);
+  var r = new FileReader();
+  r.onload = function(e){
+    _singleURL = e.target.result;
+    document.getElementById('singlePreview').innerHTML = '<img src="'+_singleURL+'">';
+    var nf = document.getElementById('s_name');
+    var ef = document.getElementById('s_ean');
+    if(!nf.value && parsed.name){ nf.value = parsed.name; nf.style.background='#f0fff4'; nf.style.borderColor='#a7f3d0'; }
+    if(!ef.value && parsed.ean){  ef.value = parsed.ean;  ef.style.background='#f0fff4'; ef.style.borderColor='#a7f3d0'; }
+  };
+  r.readAsDataURL(file);
+}
+
+function generateSingle(){
+  if(!_singleURL){showSt('st-single','&#9888; Pehle barcode image upload karein.',1);return;}
+  var name = document.getElementById('s_name').value.trim();
+  var ean  = document.getElementById('s_ean').value.trim();
+  if(!name&&!ean){showSt('st-single','&#9888; Product name ya EAN enter karein.',1);return;}
+  var copies = parseInt(document.getElementById('s_copies').value)||54;
+  var pages  = parseInt(document.getElementById('s_pages').value)||1;
+  var fname  = 'UNIGEN_'+_sn(name||ean);
+  showSt('st-single','&#9203; PDF ban raha hai&#8230;',0);
+  setTimeout(function(){
+    _buildPDF([{name:name,ean:ean,qty:copies,pages:pages,dataURL:_singleURL}], fname, function(ok,msg){
+      showSt('st-single',(ok?'&#10003; ':'&#10007; ')+msg, !ok);
+    });
+  },80);
+}
+
+// ============================================================
+// BULK EXCEL TAB
+// ============================================================
+function doDragOver(e,id){e.preventDefault();document.getElementById(id).classList.add('dragover');}
+function doDragLeave(id){document.getElementById(id).classList.remove('dragover');}
+function doDropFile(e){e.preventDefault();doDragLeave('dropZone');var f=e.dataTransfer.files[0];if(f)readExcel(f);}
+
+function readExcel(file){
+  if(!file)return;
+  var r=new FileReader();
+  r.onload=function(e){
+    var wb=XLSX.read(e.target.result,{type:'binary'});
+    var ws=wb.Sheets[wb.SheetNames[0]];
+    var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    _bulkExcelData=[];
+    for(var i=1;i<rows.length;i++){
+      var row=rows[i];
+      var name=String(row[0]||'').trim();
+      var ean =String(row[1]||'').trim();
+      var qty =parseInt(row[2])||54;
+      var pages=parseInt(row[3])||1;
+      if(!name&&!ean)continue;
+      _bulkExcelData.push({name:name,ean:ean,qty:qty,pages:pages,dataURL:null,matched:false});
+    }
+    renderExcelTable();
+    matchExcelImages();
+    showSt('st-bulk','&#10003; '+_bulkExcelData.length+' products loaded. Ab barcode images upload karein.',0);
+  };
+  r.readAsBinaryString(file);
+}
+
+function loadBarcodeImages(inp, tab){
+  if(!inp.files||!inp.files.length)return;
+  var files=Array.from(inp.files);
+  var loaded=0;
+  files.forEach(function(file){
+    var base = file.name.replace(/\.[^.]+$/,'').trim();
+    var r=new FileReader();
+    r.onload=function(e){
+      var dataURL=e.target.result;
+      _eanMap[base.toLowerCase()]=dataURL;
+      _eanMap[base]=dataURL;
+      var parsed=parseFilename(file.name);
+      if(parsed.ean){_eanMap[parsed.ean]=dataURL;_eanMap[parsed.ean.toLowerCase()]=dataURL;}
+      loaded++;
+      if(loaded===files.length){
+        matchExcelImages();
+        renderExcelTable();
+        var matched=_bulkExcelData.filter(function(d){return d.matched;}).length;
+        showSt('st-bulk','&#10003; '+files.length+' images loaded. '+matched+'/'+_bulkExcelData.length+' products matched.',0);
+      }
+    };
+    r.readAsDataURL(file);
+  });
+}
+
+function matchExcelImages(){
+  _bulkExcelData.forEach(function(row){
+    if(row.matched)return;
+    var eanKey=row.ean.toLowerCase();
+    var nameKey=row.name.toLowerCase();
+    if(_eanMap[eanKey]){row.dataURL=_eanMap[eanKey];row.matched=true;return;}
+    if(_eanMap[row.ean]){row.dataURL=_eanMap[row.ean];row.matched=true;return;}
+    if(_eanMap[nameKey]){row.dataURL=_eanMap[nameKey];row.matched=true;return;}
+    var keys=Object.keys(_eanMap);
+    for(var k=0;k<keys.length;k++){
+      var key=keys[k].toLowerCase();
+      if(eanKey&&(key.indexOf(eanKey)!==-1||eanKey.indexOf(key)!==-1)){
+        row.dataURL=_eanMap[keys[k]];row.matched=true;return;
+      }
+    }
+  });
+}
+
+function renderExcelTable(){
+  var tbody=document.getElementById('bulkExcelTbody');
+  if(!tbody)return;
+  tbody.innerHTML='';
+  _bulkExcelData.forEach(function(row,i){
+    var tr=document.createElement('tr');
+    var bcCell = row.matched
+      ? '<img src="'+row.dataURL+'" class="bc-thumb"><br><span style="color:#1e7e34;font-size:10px;font-weight:700;">&#10003; Matched</span>'
+      : '<span style="color:#e94560;font-size:11px;font-weight:700;">&#10007; Not matched</span>';
+    tr.innerHTML=
+      '<td>'+(i+1)+'</td>'+
+      '<td><input type="text" value="'+esc(row.name)+'" onchange="_bulkExcelData['+i+'].name=this.value"></td>'+
+      '<td><input type="text" value="'+esc(row.ean)+'" style="width:130px" onchange="_bulkExcelData['+i+'].ean=this.value;matchExcelImages();renderExcelTable();"></td>'+
+      '<td><input type="number" value="'+row.qty+'" min="1" max="100" style="width:60px" onchange="_bulkExcelData['+i+'].qty=parseInt(this.value)||54"></td>'+
+      '<td><input type="number" value="'+row.pages+'" min="1" max="20" style="width:50px" onchange="_bulkExcelData['+i+'].pages=parseInt(this.value)||1"></td>'+
+      '<td style="text-align:center">'+bcCell+'</td>'+
+      '<td><button class="del-btn" onclick="deleteExcelRow('+i+')">&#10005;</button></td>';
+    tbody.appendChild(tr);
+  });
+  document.getElementById('bulkExcelTableWrap').style.display=_bulkExcelData.length?'block':'none';
+  document.getElementById('bulkExcelBtnRow').style.display=_bulkExcelData.length?'flex':'none';
+  document.getElementById('bulkExcelRowCount').textContent=
+    _bulkExcelData.length+' products \xb7 '+_bulkExcelData.filter(function(d){return d.matched;}).length+' matched';
+}
+
+function deleteExcelRow(i){_bulkExcelData.splice(i,1);renderExcelTable();}
+
+// Single merged PDF (old behavior)
+function generateBulkExcel(){
+  if(!_bulkExcelData.length){showSt('st-bulk','&#9888; Pehle data load karein.',1);return;}
+  var missing=_bulkExcelData.filter(function(r){return !r.dataURL;}).map(function(r){return r.name||r.ean;});
+  if(missing.length){showSt('st-bulk','&#9888; Barcode missing for: '+missing.join(', '),1);return;}
+  var fname=_bulkExcelData.length===1?'UNIGEN_'+_sn(_bulkExcelData[0].name):'UNIGEN_Bulk_'+_bulkExcelData.length+'_Products';
+  showSt('st-bulk','&#9203; PDF ban raha hai ('+_bulkExcelData.length+' products)&#8230;',0);
+  setTimeout(function(){
+    _buildPDF(_bulkExcelData,fname,function(ok,msg){showSt('st-bulk',(ok?'&#10003; ':'&#10007; ')+msg,!ok);});
+  },80);
+}
+
+// ZIP with individual PDFs
+function generateBulkExcelZIP(){
+  if(!_bulkExcelData.length){showSt('st-bulk','&#9888; Pehle data load karein.',1);return;}
+  var missing=_bulkExcelData.filter(function(r){return !r.dataURL;}).map(function(r){return r.name||r.ean;});
+  if(missing.length){showSt('st-bulk','&#9888; Barcode missing for: '+missing.join(', '),1);return;}
+  _buildZIP(_bulkExcelData, 'UNIGEN_Bulk_Labels', 'bulk');
+}
+
+// ============================================================
+// MANUAL BULK TAB
+// ============================================================
+function doDropSmart(e){
+  e.preventDefault();
+  doDragLeave('smartDropZone');
+  var files=Array.from(e.dataTransfer.files).filter(function(f){return f.type.startsWith('image/');});
+  if(files.length)processSmartFiles(files);
+}
+
+function smartBulkUpload(inp){
+  if(!inp.files||!inp.files.length)return;
+  processSmartFiles(Array.from(inp.files));
+}
+
+function processSmartFiles(files){
+  var loaded=0;
+  files.forEach(function(file){
+    var parsed=parseFilename(file.name);
+    var r=new FileReader();
+    r.onload=function(e){
+      var dataURL=e.target.result;
+      var existing=null;
+      if(parsed.ean){
+        for(var j=0;j<_manualData.length;j++){
+          if(_manualData[j].ean===parsed.ean){existing=_manualData[j];break;}
+        }
+      }
+      if(existing){
+        existing.dataURL=dataURL;
+        existing.matched=true;
+        if(parsed.name&&!existing.name)existing.name=parsed.name;
+      } else {
+        _manualData.push({
+          name: parsed.name,
+          ean:  parsed.ean,
+          qty:  54,
+          pages:1,
+          dataURL:dataURL,
+          matched:true
+        });
+      }
+      loaded++;
+      if(loaded===files.length){
+        renderManualTable();
+        showSt('st-manual','&#10003; '+files.length+' images added. Details check karein aur edit karein.',0);
+      }
+    };
+    r.readAsDataURL(file);
+  });
+}
+
+function addManualRow(){
+  _manualData.push({name:'',ean:'',qty:54,pages:1,dataURL:null,matched:false});
+  renderManualTable();
+  setTimeout(function(){
+    var inputs=document.querySelectorAll('#manualTbody tr:last-child input[type="text"]');
+    if(inputs[0])inputs[0].focus();
+  },50);
+}
+
+function deleteManualRow(i){_manualData.splice(i,1);renderManualTable();}
+function clearAll(){if(confirm('Sab rows delete kar dein?')){_manualData=[];renderManualTable();}}
+
+function loadManualBarcode(i,inp){
+  if(!inp.files||!inp.files[0])return;
+  var file=inp.files[0];
+  var parsed=parseFilename(file.name);
+  var r=new FileReader();
+  r.onload=function(e){
+    _manualData[i].dataURL=e.target.result;
+    _manualData[i].matched=true;
+    if(!_manualData[i].name&&parsed.name) _manualData[i].name=parsed.name;
+    if(!_manualData[i].ean&&parsed.ean)   _manualData[i].ean=parsed.ean;
+    renderManualTable();
+  };
+  r.readAsDataURL(file);
+}
+
+function renderManualTable(){
+  var tbody=document.getElementById('manualTbody');
+  if(!tbody)return;
+  tbody.innerHTML='';
+  _manualData.forEach(function(row,i){
+    var tr=document.createElement('tr');
+    var nameClass=row.name&&row.matched?'auto-filled':'';
+    var eanClass =row.ean&&row.matched?'auto-filled':'';
+    var bcCell='';
+    if(row.matched&&row.dataURL){
+      bcCell='<img src="'+row.dataURL+'" class="bc-thumb"><br>'+
+              '<label for="mbc_'+i+'" class="btn btn-gray" style="padding:2px 7px;font-size:10px;cursor:pointer;margin-top:3px;display:inline-block;">&#8619; Change</label>'+
+              '<input type="file" id="mbc_'+i+'" accept="image/*" style="display:none" onchange="loadManualBarcode('+i+',this)">';
+    } else {
+      bcCell='<label for="mbc_'+i+'" class="btn btn-blue" style="padding:4px 10px;font-size:11px;cursor:pointer;display:inline-block;">&#128247; Upload</label>'+
+             '<input type="file" id="mbc_'+i+'" accept="image/*" style="display:none" onchange="loadManualBarcode('+i+',this)">';
+    }
+    tr.innerHTML=
+      '<td style="color:#888;">'+(i+1)+'</td>'+
+      '<td><input type="text" class="'+nameClass+'" value="'+esc(row.name)+'" placeholder="Product name" onchange="_manualData['+i+'].name=this.value;this.style.background=\'\'"></td>'+
+      '<td><input type="text" class="'+eanClass+'" value="'+esc(row.ean)+'" placeholder="EAN" style="width:130px" onchange="_manualData['+i+'].ean=this.value;this.style.background=\'\'"></td>'+
+      '<td><select onchange="_manualData['+i+'].qty=parseInt(this.value)">'+
+        [10,12,15,20,24,30,54].map(function(v){return '<option value="'+v+'"'+(v===row.qty?' selected':'')+'>'+v+'</option>';}).join('')+
+      '</select></td>'+
+      '<td><input type="number" value="'+row.pages+'" min="1" max="20" style="width:50px" onchange="_manualData['+i+'].pages=parseInt(this.value)||1"></td>'+
+      '<td style="text-align:center">'+bcCell+'</td>'+
+      '<td><button class="del-btn" onclick="deleteManualRow('+i+')">&#10005;</button></td>';
+    tbody.appendChild(tr);
+  });
+  document.getElementById('manualTableWrap').style.display=_manualData.length?'block':'none';
+  document.getElementById('manualBtnRow').style.display=_manualData.length?'flex':'none';
+  document.getElementById('manualRowCount').textContent=
+    _manualData.length+' products \xb7 '+_manualData.filter(function(d){return d.matched;}).length+' with barcode';
+}
+
+function generateManual(){
+  if(!_manualData.length){showSt('st-manual','&#9888; Koi bhi product nahi hai.',1);return;}
+  var missing=_manualData.filter(function(r){return !r.dataURL;}).map(function(r,i){return r.name||r.ean||('Row '+(i+1));});
+  if(missing.length){showSt('st-manual','&#9888; Barcode image missing for: '+missing.join(', '),1);return;}
+  var fname=_manualData.length===1?'UNIGEN_'+_sn(_manualData[0].name||_manualData[0].ean):'UNIGEN_Bulk_'+_manualData.length+'_Products';
+  showSt('st-manual','&#9203; PDF ban raha hai ('+_manualData.length+' products)&#8230;',0);
+  setTimeout(function(){
+    _buildPDF(_manualData,fname,function(ok,msg){showSt('st-manual',(ok?'&#10003; ':'&#10007; ')+msg,!ok);});
+  },80);
+}
+
+function generateManualZIP(){
+  if(!_manualData.length){showSt('st-manual','&#9888; Koi bhi product nahi hai.',1);return;}
+  var missing=_manualData.filter(function(r){return !r.dataURL;}).map(function(r,i){return r.name||r.ean||('Row '+(i+1));});
+  if(missing.length){showSt('st-manual','&#9888; Barcode image missing for: '+missing.join(', '),1);return;}
+  _buildZIP(_manualData, 'UNIGEN_Bulk_Labels', 'manual');
+}
+
+// ============================================================
+// PDF BUILDER (single merged PDF)
+// ============================================================
+function _buildPDF(products, filename, cb){
+  var jsPDF=window.jspdf.jsPDF;
+  var doc=new jsPDF('p','mm','a4');
+  var pageW=210,pageH=297;
+  var _firstPage=true;
+  var idx=0;
+  function next(){
+    if(idx>=products.length){doc.save(filename+'.pdf');cb(true,'PDF download shuru: '+filename+'.pdf');return;}
+    var prod=products[idx++];
+    var qty=parseInt(prod.qty)||54;
+    var cfg=_gc[qty]||_gc[54];
+    var cellW=pageW/cfg.cols;
+    var headerH=9;
+    var usableH=pageH-headerH;
+    var cellH=usableH/cfg.rows;
+    var img=new Image();
+    img.onload=function(){
+      var ar=img.width/img.height;
+      var maxW=cellW*0.82, maxH=cellH*0.68;
+      var bW,bH;
+      if(maxW/ar<=maxH){bW=maxW;bH=maxW/ar;}
+      else{bH=maxH;bW=maxH*ar;}
+      for(var p=0;p<(prod.pages||1);p++){
+        if(!_firstPage)doc.addPage();_firstPage=false;
+        // Header
+        doc.setFillColor(15,52,96);
+        doc.rect(0,0,pageW,headerH,'F');
+        doc.setFontSize(9);doc.setFont('helvetica','bold');
+        doc.setTextColor(255,255,255);
+        doc.text((prod.name||prod.ean||'').toUpperCase().substring(0,60),4,6);
+        if(prod.ean){
+          doc.setFontSize(7.5);doc.setTextColor(180,210,255);
+          doc.text('EAN: '+prod.ean,pageW/2,6,{align:'center'});
+        }
+        doc.setFontSize(7);doc.setTextColor(180,200,255);
+        doc.text('UNIGEN | Page '+(p+1)+' of '+(prod.pages||1),pageW-3,6,{align:'right'});
+        doc.setTextColor(0,0,0);
+        // Labels grid
+        for(var row=0;row<cfg.rows;row++){
+          for(var col=0;col<cfg.cols;col++){
+            var x=col*cellW;
+            var y=headerH+row*cellH;
+            var ix=x+(cellW-bW)/2;
+            var iy=y+(cellH-bH-7)/2;
+            doc.addImage(prod.dataURL,'PNG',ix,iy,bW,bH);
+            doc.setFontSize(6);doc.setFont('helvetica','bold');
+            doc.text(prod.name||'',x+cellW/2,iy+bH+3,{align:'center',maxWidth:cellW-2});
+            if(prod.ean){
+              doc.setFontSize(5.5);doc.setFont('helvetica','normal');
+              doc.text(prod.ean,x+cellW/2,iy+bH+6.5,{align:'center'});
+            }
+            doc.setDrawColor(190,190,190);
+            doc.setLineDashPattern([1,1],0);
+            doc.rect(x,y,cellW,cellH);
+          }
+        }
+      }
+      next();
+    };
+    img.onerror=function(){cb(false,'Image error: '+(prod.name||prod.ean));};
+    img.src=prod.dataURL;
+  }
+  next();
+}
+
+// ============================================================
+// ZIP BUILDER - Har Product Ka Alag PDF
+// ============================================================
+function _buildZIP(products, zipName, tab){
+  var stId = 'st-'+tab;
+  var progressWrap = document.getElementById('progress-'+tab);
+  var progressBar = document.getElementById('progress-bar-'+tab);
+  var progressLabel = document.getElementById('progress-label-'+tab);
+
+  showSt(stId, '&#9203; ZIP ban raha hai... ('+products.length+' products)', 0);
+  progressWrap.style.display = 'block';
+  progressBar.style.width = '0%';
+  progressLabel.textContent = '0 / '+products.length+' PDFs ready...';
+
+  var zip = new JSZip();
+  var idx = 0;
+
+  function processNext(){
+    if(idx >= products.length){
+      // All PDFs added, generate ZIP
+      progressLabel.textContent = 'ZIP compress ho raha hai...';
+      zip.generateAsync({type:'blob', compression:'DEFLATE', compressionOptions:{level:6}})
+        .then(function(blob){
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = zipName + '_' + products.length + '_Products.zip';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(function(){URL.revokeObjectURL(url);}, 3000);
+          progressBar.style.width = '100%';
+          progressLabel.textContent = 'Done!';
+          showSt(stId, '&#10003; ZIP download shuru! ' + products.length + ' alag PDFs ZIP mein hain.', 0);
+          setTimeout(function(){ progressWrap.style.display='none'; }, 3000);
+        })
+        .catch(function(err){
+          showSt(stId, '&#10007; ZIP error: '+err.message, 1);
+          progressWrap.style.display = 'none';
+        });
+      return;
+    }
+
+    var prod = products[idx];
+    var pct = Math.round((idx / products.length) * 100);
+    progressBar.style.width = pct + '%';
+    progressLabel.textContent = (idx+1) + ' / ' + products.length + ' PDFs ready...';
+
+    // Build single product PDF as blob
+    _buildSinglePDFBlob(prod, function(blob, err){
+      if(err){
+        showSt(stId, '&#10007; Error for ' + (prod.name||prod.ean) + ': ' + err, 1);
+        progressWrap.style.display = 'none';
+        return;
+      }
+      // Filename: EAN_ProductName.pdf (EAN pehle, no prefix)
+      var safeName = _sn(prod.name || ('Product_'+(idx+1)));
+      var safeEan = prod.ean ? prod.ean + '_' : '';
+      var pdfName = safeEan + safeName + '.pdf';
+      zip.file(pdfName, blob);
+      idx++;
+      // Use setTimeout to keep UI responsive
+      setTimeout(processNext, 10);
+    });
+  }
+
+  setTimeout(processNext, 80);
+}
+
+// Build PDF for a single product and return as Blob
+function _buildSinglePDFBlob(prod, cb){
+  var jsPDF = window.jspdf.jsPDF;
+  var doc = new jsPDF('p','mm','a4');
+  var pageW=210, pageH=297;
+  var qty = parseInt(prod.qty)||54;
+  var cfg = _gc[qty]||_gc[54];
+  var cellW = pageW/cfg.cols;
+  var headerH = 9;
+  var usableH = pageH-headerH;
+  var cellH = usableH/cfg.rows;
+
+  var img = new Image();
+  img.onload = function(){
+    var ar = img.width/img.height;
+    var maxW = cellW*0.82, maxH = cellH*0.68;
+    var bW, bH;
+    if(maxW/ar <= maxH){ bW=maxW; bH=maxW/ar; }
+    else { bH=maxH; bW=maxH*ar; }
+
+    var firstPage = true;
+    for(var p=0; p<(prod.pages||1); p++){
+      if(!firstPage) doc.addPage();
+      firstPage = false;
+      // Header
+      doc.setFillColor(15,52,96);
+      doc.rect(0,0,pageW,headerH,'F');
+      doc.setFontSize(9); doc.setFont('helvetica','bold');
+      doc.setTextColor(255,255,255);
+      doc.text((prod.name||prod.ean||'').toUpperCase().substring(0,60), 4, 6);
+      if(prod.ean){
+        doc.setFontSize(7.5); doc.setTextColor(180,210,255);
+        doc.text('EAN: '+prod.ean, pageW/2, 6, {align:'center'});
+      }
+      doc.setFontSize(7); doc.setTextColor(180,200,255);
+      doc.text('UNIGEN | Page '+(p+1)+' of '+(prod.pages||1), pageW-3, 6, {align:'right'});
+      doc.setTextColor(0,0,0);
+      // Labels grid
+      for(var row=0; row<cfg.rows; row++){
+        for(var col=0; col<cfg.cols; col++){
+          var x = col*cellW;
+          var y = headerH+row*cellH;
+          var ix = x+(cellW-bW)/2;
+          var iy = y+(cellH-bH-7)/2;
+          doc.addImage(prod.dataURL,'PNG',ix,iy,bW,bH);
+          doc.setFontSize(6); doc.setFont('helvetica','bold');
+          doc.text(prod.name||'', x+cellW/2, iy+bH+3, {align:'center', maxWidth:cellW-2});
+          if(prod.ean){
+            doc.setFontSize(5.5); doc.setFont('helvetica','normal');
+            doc.text(prod.ean, x+cellW/2, iy+bH+6.5, {align:'center'});
+          }
+          doc.setDrawColor(190,190,190);
+          doc.setLineDashPattern([1,1],0);
+          doc.rect(x,y,cellW,cellH);
+        }
+      }
+    }
+
+    // Return as Blob
+    var blob = doc.output('blob');
+    cb(blob, null);
+  };
+  img.onerror = function(){
+    cb(null, 'Image load error for '+(prod.name||prod.ean));
+  };
+  img.src = prod.dataURL;
+}
+
+// ============================================================
+// TEMPLATE DOWNLOAD
+// ============================================================
+function downloadTemplate(){
+  var ws_data=[
+    ['ProductName','EAN','LabelsPerPage','Pages'],
+    ['Microfiber Cloth Duster 40x40','8901234567890',54,1],
+    ['Car Wash Sponge Pad','8901234567891',30,2],
+    ['Glass Cleaner Spray 500ml','8901234567892',20,1]
+  ];
+  var wb=XLSX.utils.book_new();
+  var ws=XLSX.utils.aoa_to_sheet(ws_data);
+  ws['!cols']=[{wch:38},{wch:16},{wch:14},{wch:7}];
+  XLSX.utils.book_append_sheet(wb,ws,'Barcodes');
+  XLSX.writeFile(wb,'UNIGEN_Barcode_Template.xlsx');
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function _sn(s){return String(s||'').replace(/[^a-zA-Z0-9 \-]/g,'').trim().replace(/\s+/g,'_').substring(0,50)||'Label';}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function showSt(id,msg,isErr){
+  var el=document.getElementById(id);if(!el)return;
+  el.innerHTML=msg;
+  el.className='status-bar'+(isErr?' error':'');
+  el.style.display=msg?'block':'none';
+}
+
+// Expose globals
+window.switchTab=switchTab;
+window.previewSingle=previewSingle;
+window.generateSingle=generateSingle;
+window.doDragOver=doDragOver;
+window.doDragLeave=doDragLeave;
+window.doDropFile=doDropFile;
+window.doDropSmart=doDropSmart;
+window.readExcel=readExcel;
+window.loadBarcodeImages=loadBarcodeImages;
+window.matchExcelImages=matchExcelImages;
+window.renderExcelTable=renderExcelTable;
+window.deleteExcelRow=deleteExcelRow;
+window.generateBulkExcel=generateBulkExcel;
+window.generateBulkExcelZIP=generateBulkExcelZIP;
+window.smartBulkUpload=smartBulkUpload;
+window.addManualRow=addManualRow;
+window.deleteManualRow=deleteManualRow;
+window.clearAll=clearAll;
+window.loadManualBarcode=loadManualBarcode;
+window.renderManualTable=renderManualTable;
+window.generateManual=generateManual;
+window.generateManualZIP=generateManualZIP;
+window.downloadTemplate=downloadTemplate;
+window._bulkExcelData=_bulkExcelData;
+window._manualData=_manualData;
+</script>
 
 </body>
 </html>
